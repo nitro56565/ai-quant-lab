@@ -710,6 +710,10 @@
                             <input type="checkbox" name="btStrategyCheck" value="LondonSessionMomentum" style="width: auto; cursor: pointer;">
                             London Session Momentum
                         </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; font-family: var(--font-main);">
+                            <input type="checkbox" name="btStrategyCheck" value="AdaptiveMomentumPullback" style="width: auto; cursor: pointer;">
+                            Adaptive Momentum Pullback
+                        </label>
                     </div>
                 </div>
                 <div class="input-group">
@@ -769,6 +773,30 @@
                                 </tr>
                             </thead>
                             <tbody id="comparisonTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Strategy Breakdown Card (Active Run) -->
+                <div class="card" id="strategyBreakdownCard" style="display: none; margin-bottom: 2rem;">
+                    <div class="card-title">Strategy Performance Breakdown (Active Run)</div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Strategy Name</th>
+                                    <th style="text-align: center;">Trades</th>
+                                    <th style="text-align: center;">Win Rate</th>
+                                    <th style="text-align: center;">Total PnL (Pips)</th>
+                                    <th style="text-align: center;">Avg Pips/Trade</th>
+                                    <th style="text-align: center;">Profit Factor</th>
+                                    <th style="text-align: center;">Sharpe Ratio</th>
+                                    <th style="text-align: center;">Max Drawdown</th>
+                                </tr>
+                            </thead>
+                            <tbody id="breakdownTableBody">
                                 <!-- Populated dynamically -->
                             </tbody>
                         </table>
@@ -889,6 +917,7 @@
                                             <th style="text-align: center;">MR</th>
                                             <th style="text-align: center;">VB</th>
                                             <th style="text-align: center;">LSM</th>
+                                            <th style="text-align: center;">AMP</th>
                                             <th style="text-align: center; font-weight: bold;">Total</th>
                                         </tr>
                                     </thead>
@@ -1348,6 +1377,30 @@
                 document.getElementById('btRecoveryFactor').textContent = sum.recovery_factor.toFixed(2);
                 document.getElementById('btAvgDuration').textContent = sum.avg_duration;
 
+                // Show strategy breakdown card
+                document.getElementById('strategyBreakdownCard').style.display = 'block';
+
+                // Render Strategy Breakdown Table
+                const tbodyBreakdown = document.getElementById('breakdownTableBody');
+                if (data.strategy_breakdown) {
+                    tbodyBreakdown.innerHTML = Object.entries(data.strategy_breakdown).map(([name, sSum]) => {
+                        const isWin = sSum.pnl_pips > 0;
+                        const sAvg = sSum.avg_pips;
+                        return `
+                            <tr>
+                                <td style="text-align: left; font-weight: 600; color: var(--text-primary); font-family: var(--font-main);">${name}</td>
+                                <td style="font-family: var(--font-mono); text-align: center;">${sSum.trades}</td>
+                                <td style="font-family: var(--font-mono); text-align: center;">${sSum.win_rate.toFixed(2)}%</td>
+                                <td style="font-family: var(--font-mono); font-weight: 600; text-align: center;" class="${isWin ? 'pnl-positive' : 'pnl-negative'}">${isWin ? '+' : ''}${sSum.pnl_pips.toFixed(2)}</td>
+                                <td style="font-family: var(--font-mono); font-weight: 600; text-align: center;" class="${sAvg > 0 ? 'pnl-positive' : 'pnl-negative'}">${sAvg > 0 ? '+' : ''}${sAvg.toFixed(2)}</td>
+                                <td style="font-family: var(--font-mono); text-align: center;">${sSum.pf.toFixed(2)}</td>
+                                <td style="font-family: var(--font-mono); text-align: center;">${sSum.sharpe.toFixed(2)}</td>
+                                <td style="font-family: var(--font-mono); text-align: center; color: var(--color-sell);">${sSum.max_dd.toFixed(2)}%</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
                 // Show monthly breakdown card
                 document.getElementById('monthlyBreakdownCard').style.display = 'block';
 
@@ -1379,6 +1432,7 @@
                             <td style="font-family: var(--font-mono); text-align: center;">${counts.MeanReversion || 0}</td>
                             <td style="font-family: var(--font-mono); text-align: center;">${counts.VolatilityBreakout || 0}</td>
                             <td style="font-family: var(--font-mono); text-align: center;">${counts.LondonSessionMomentum || 0}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${counts.AdaptiveMomentumPullback || 0}</td>
                             <td style="font-family: var(--font-mono); text-align: center; font-weight: bold; color: var(--text-primary);">${m.total}</td>
                         </tr>
                     `;
@@ -1536,7 +1590,8 @@
                 'PullbackContinuation',
                 'MeanReversion',
                 'VolatilityBreakout',
-                'LondonSessionMomentum'
+                'LondonSessionMomentum',
+                'AdaptiveMomentumPullback'
             ];
 
             const tbodyComp = document.getElementById('comparisonTableBody');

@@ -1,0 +1,8 @@
+from .detector import (
+    RegimeDetector,
+    REGIME_TRENDING_BULLISH,
+    REGIME_TRENDING_BEARISH,
+    REGIME_MEAN_REVERSION,
+    REGIME_CHOP_LOW_VOL,
+    REGIME_CHOP_HIGH_VOL
+)

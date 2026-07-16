@@ -2,29 +2,28 @@ from flask import Flask, jsonify, request, send_from_directory
 import os
 import pandas as pd
 from data_loader import DataLoader
-from strategy_engine import (
-    StrategyEngine,
-    AdaptiveTrendFollowing,
-    PullbackContinuation,
-    MeanReversion,
-    VolatilityBreakout,
-    LondonSessionMomentum
-)
+from feature_engine import FeatureEngine
+from regime_detector import RegimeDetector
+from signal_engine import SignalEngine
+from execution_engine import ExecutionEngine
 
 app = Flask(__name__, static_folder='.')
 
-# Map strategy names to their respective classes
-STRATEGIES = {
-    'AdaptiveTrendFollowing': AdaptiveTrendFollowing,
-    'PullbackContinuation': PullbackContinuation,
-    'MeanReversion': MeanReversion,
-    'VolatilityBreakout': VolatilityBreakout,
-    'LondonSessionMomentum': LondonSessionMomentum
-}
+# Map of supported strategies
+STRATEGIES = [
+    'AdaptiveTrendFollowing',
+    'PullbackContinuation',
+    'MeanReversion',
+    'VolatilityBreakout',
+    'LondonSessionMomentum',
+    'AdaptiveMomentumPullback'
+]
 
-# Share single instance of loader and engine across requests
+# Share single instance of loader and feature engines across requests
 loader = DataLoader()
-engine = StrategyEngine(loader)
+feat_engine = FeatureEngine()
+detector = RegimeDetector()
+sig_engine = SignalEngine()
 
 @app.route('/')
 def index():
@@ -51,19 +50,90 @@ def run_backtest():
             
     try:
         combined_trades = []
+        strategy_breakdown = {}
+        pip_value = 10.0
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
         
-        # 1. Execute backtests for all selected strategies
+        # 1. Execute backtests for all selected strategies using the new 6-tier feature pipeline
         for s_name in strategies_input:
-            strategy_class = STRATEGIES[s_name]
-            strategy = strategy_class()
+            primary_timeframe = "15m" if s_name == "LondonSessionMomentum" else "1h"
             
-            df_signals, trades = engine.run_backtest(strategy, symbol, start_date, end_date)
+            df_featured = feat_engine.generate_features(
+                loader=loader,
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                primary_timeframe=primary_timeframe
+            )
             
-            for t in trades:
-                if t['status'] == 'closed':
-                    t_copy = t.copy()
-                    t_copy['strategy'] = strategy.name
-                    combined_trades.append(t_copy)
+            df_regimed = detector.detect_regimes(df_featured)
+            
+            eval_funcs = {
+                "AdaptiveTrendFollowing": sig_engine.evaluate_adaptive_trend,
+                "PullbackContinuation": sig_engine.evaluate_pullback_continuation,
+                "MeanReversion": sig_engine.evaluate_mean_reversion,
+                "VolatilityBreakout": sig_engine.evaluate_volatility_breakout,
+                "LondonSessionMomentum": sig_engine.evaluate_london_momentum,
+                "AdaptiveMomentumPullback": sig_engine.evaluate_adaptive_momentum_pullback
+            }
+            
+            signals, config = eval_funcs[s_name](df_regimed)
+            
+            # Filter out warmup data to target range
+            is_in_range = df_regimed.index >= start_dt
+            df_regimed_filtered = df_regimed[is_in_range]
+            signals_filtered = signals[is_in_range]
+            
+            # Initialize ExecutionEngine with $10/pip per standard lot sizing and 1% capital risk sizing
+            exec_engine = ExecutionEngine(initial_capital=initial_capital, default_pip_value=10.0)
+            pip_size = loader.get_symbol_metadata(symbol).get('pip_size', 0.0001)
+            
+            trades = exec_engine.run_simulation(
+                df=df_regimed_filtered,
+                signals=signals_filtered,
+                config=config,
+                symbol=symbol,
+                pip_size=pip_size,
+                strategy_name=s_name
+            )
+            
+            s_closed_trades = [t for t in trades if t['status'] == 'closed']
+            s_total_trades = len(s_closed_trades)
+            
+            if s_total_trades == 0:
+                strategy_breakdown[s_name] = {
+                    'trades': 0,
+                    'win_rate': 0.0,
+                    'pnl_pips': 0.0,
+                    'avg_pips': 0.0,
+                    'pf': 1.0,
+                    'sharpe': 0.0,
+                    'max_dd': 0.0,
+                    'sanity_warnings': []
+                }
+                continue
+                
+            # Compute using ExecutionEngine performance metrics
+            exec_metrics = exec_engine.calculate_performance(trades, start_date, end_date)
+            s_pnl_pips = sum(t['pnl_pips'] for t in s_closed_trades)
+            s_avg_pips = s_pnl_pips / s_total_trades if s_total_trades > 0 else 0.0
+            
+            strategy_breakdown[s_name] = {
+                'trades': exec_metrics['trades'],
+                'win_rate': round(exec_metrics['win_rate'], 2),
+                'pnl_pips': round(s_pnl_pips, 2),
+                'avg_pips': round(s_avg_pips, 2),
+                'pf': round(exec_metrics['pf'], 2),
+                'sharpe': round(exec_metrics['sharpe'], 2),
+                'max_dd': round(exec_metrics['max_dd'], 2),
+                'sanity_warnings': exec_metrics['sanity_warnings']
+            }
+            
+            for t in s_closed_trades:
+                t_copy = t.copy()
+                t_copy['strategy'] = s_name
+                combined_trades.append(t_copy)
                     
         # 2. Sort combined trades chronologically by exit time
         combined_trades_sorted = sorted(combined_trades, key=lambda x: x['exit_time'])
@@ -73,13 +143,11 @@ def run_backtest():
             t['trade_id'] = idx + 1
             
         # 3. Compile the Equity Curve and formatting
-        # Default leverage size is 1 lot, pip value = $10
-        pip_value = 10.0
         current_equity = initial_capital
         equity_curve = [{'time': start_date, 'equity': current_equity}]
         
         for t in combined_trades_sorted:
-            pnl_usd = t['pnl_pips'] * pip_value
+            pnl_usd = t['pnl_usd']
             current_equity += pnl_usd
             equity_curve.append({
                 'time': t['exit_time'].strftime('%Y-%m-%d %H:%M'),
@@ -88,8 +156,8 @@ def run_backtest():
             
         # 4. Calculate stats
         total_trades = len(combined_trades_sorted)
-        wins = [t for t in combined_trades_sorted if t['pnl_pips'] > 0]
-        losses = [t for t in combined_trades_sorted if t['pnl_pips'] <= 0]
+        wins = [t for t in combined_trades_sorted if t['pnl_usd'] > 0]
+        losses = [t for t in combined_trades_sorted if t['pnl_usd'] <= 0]
         
         win_rate = (len(wins) / total_trades * 100) if total_trades > 0 else 0.0
         total_pips = sum(t['pnl_pips'] for t in combined_trades_sorted)
@@ -333,6 +401,7 @@ def run_backtest():
             'pnl_by_dow': pnl_by_dow,
             'pnl_by_hour': pnl_by_hour,
             'pnl_by_strategy': pnl_by_strat,
+            'strategy_breakdown': strategy_breakdown,
             'monthly_performance': monthly_performance,
             'monthly_distribution': monthly_distribution,
             'equity_curve': equity_curve,
