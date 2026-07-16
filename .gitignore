@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Data directories (generated files)
+market_data_pipeline/output/
+market_data_pipeline/downloads/
+market_data_pipeline/logs/
+market_data_pipeline/metadata/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

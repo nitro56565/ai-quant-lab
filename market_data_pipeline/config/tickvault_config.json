@@ -1,0 +1,7 @@
+{
+    "base_url": "https://datafeed.dukascopy.com/datafeed",
+    "download_dir": "downloads",
+    "output_dir": "output",
+    "metadata_dir": "metadata",
+    "log_dir": "logs"
+}

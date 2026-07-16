@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quant Lab - Execution & Backtest Simulator</title>
+    <!-- Modern Google Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ChartJS via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #08090c;
+            --bg-surface: #10121a;
+            --bg-card: #171b26;
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            
+            --color-buy: #10b981;
+            --color-sell: #ef4444;
+            --color-close: #f59e0b;
+            --color-partial: #3b82f6;
+            --color-reverse: #8b5cf6;
+            --color-primary: #6366f1;
+            
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            padding: 2rem;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(16, 18, 26, 0.8), rgba(23, 27, 38, 0.6));
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        header h1 {
+            font-family: var(--font-mono);
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .header-meta span strong {
+            color: var(--text-primary);
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: white;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        /* Tab Content Toggle */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Layout Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+        }
+
+        .backtest-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+        }
+
+        /* Glassmorphic Container Card */
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .card:hover {
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .card-title {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.8rem;
+        }
+
+        /* Account Status Cards Grid */
+        .account-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-box .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box .value {
+            font-family: var(--font-mono);
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .pnl-positive {
+            color: var(--color-buy) !important;
+        }
+
+        .pnl-negative {
+            color: var(--color-sell) !important;
+        }
+
+        /* Execution Control Buttons */
+        .execution-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .input-group input, .input-group select {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+            width: 100%;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: #6366f1;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-buy {
+            background-color: var(--color-buy);
+        }
+
+        .btn-buy:hover {
+            background-color: #059669;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-sell {
+            background-color: var(--color-sell);
+        }
+
+        .btn-sell:hover {
+            background-color: #dc2626;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-full {
+            grid-column: span 2;
+        }
+
+        .btn-close {
+            background-color: var(--color-close);
+        }
+
+        .btn-close:hover {
+            background-color: #d97706;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-partial {
+            background-color: var(--color-partial);
+        }
+
+        .btn-partial:hover {
+            background-color: #2563eb;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-reverse {
+            background-color: var(--color-reverse);
+        }
+
+        .btn-reverse:hover {
+            background-color: #7c3aed;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Tables & Lists */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            text-align: left;
+        }
+
+        th {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Order Log / History List */
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .log-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-item .details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .log-item .time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .log-item .action-tag {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-right: 0.4rem;
+        }
+
+        .tag-buy { background: rgba(16, 185, 129, 0.15); color: var(--color-buy); }
+        .tag-sell { background: rgba(239, 68, 68, 0.15); color: var(--color-sell); }
+        .tag-close { background: rgba(245, 158, 11, 0.15); color: var(--color-close); }
+        .tag-partial { background: rgba(59, 130, 246, 0.15); color: var(--color-partial); }
+        .tag-reverse { background: rgba(139, 92, 246, 0.15); color: var(--color-reverse); }
+
+        .log-item .pnl-col {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        /* Price Chart Area */
+        .chart-container {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+
+        .live-price-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .live-price-display {
+            font-family: var(--font-mono);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #6366f1;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .price-up { color: var(--color-buy); }
+        .price-down { color: var(--color-sell); }
+
+        .live-badge {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            font-family: var(--font-mono);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #818cf8;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Backtest Banner stats */
+        .backtest-banner {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .banner-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .banner-card .lbl {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .banner-card .val {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Overlay Spinner for Loading State */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(8, 9, 12, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 16px;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(99, 102, 241, 0.1);
+            border-top: 5px solid var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.5; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>AI Quant Lab</h1>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.2rem;">Simulation & Backtesting Dashboard</p>
+        </div>
+        <div class="header-meta">
+            <span>Symbol: <strong>EURUSD</strong></span>
+            <span>Spread: <strong>0.5 pips</strong></span>
+            <span>Leverage: <strong>1:100</strong></span>
+        </div>
+    </header>
+
+    <!-- Tab Bar -->
+    <div class="tabs">
+        <button id="tabLive" class="tab-btn active">Live Simulator</button>
+        <button id="tabBacktest" class="tab-btn">Backtest Lab</button>
+    </div>
+
+    <!-- TAB 1: Live Simulator Content -->
+    <div id="contentLive" class="tab-content active">
+        <div class="dashboard-grid">
+            <!-- Left Side: Price Feed & Open Positions -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div class="card">
+                    <div class="live-price-header">
+                        <div>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-family: var(--font-mono);">Live EURUSD Price Feed</span>
+                            <div id="priceDisplay" class="live-price-display">1.20450</div>
+                        </div>
+                        <div class="live-badge">
+                            <span class="live-dot"></span>
+                            LIVE STREAMING
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Active Open Positions</span>
+                        <span id="posCountBadge" style="font-size: 0.8rem; background: rgba(255,255,255,0.06); padding: 0.2rem 0.6rem; border-radius: 10px;">0 Open</span>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Volume (Lots)</th>
+                                    <th>Entry Price</th>
+                                    <th>Current Price</th>
+                                    <th>Unrealized P&L</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positionTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No active positions. Execute an order on the side panel.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Account and Execution panel -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div class="card">
+                    <div class="card-title">Account Summary</div>
+                    <div class="account-stats">
+                        <div class="stat-box">
+                            <div class="label">Balance</div>
+                            <div id="statBalance" class="value">$10,000.00</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Equity</div>
+                            <div id="statEquity" class="value">$10,000.00</div>
+                        </div>
+                        <div class="stat-box" style="grid-column: span 2; background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05));">
+                            <div class="label">Total Floating P&L</div>
+                            <div id="statPnl" class="value" style="font-size: 1.6rem;">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Execution Controls</div>
+                    <div class="execution-inputs">
+                        <div class="input-group">
+                            <label for="lotSize">Trade Volume (Lots)</label>
+                            <input type="number" id="lotSize" value="1.0" min="0.01" max="100" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="btn-grid">
+                        <button id="btnBuy" class="btn btn-buy">BUY / LONG</button>
+                        <button id="btnSell" class="btn btn-sell">SELL / SHORT</button>
+                        <button id="btnPartial" class="btn btn-partial btn-full">PARTIAL CLOSE 50%</button>
+                        <button id="btnReverse" class="btn btn-reverse btn-full">REVERSE POSITION</button>
+                        <button id="btnClose" class="btn btn-close btn-full">CLOSE ENTIRE POSITION</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Transaction Log</div>
+                    <div id="logList" class="log-list">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 1rem 0; font-size: 0.85rem;">No executions recorded yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: Historical Backtester Content -->
+    <div id="contentBacktest" class="tab-content">
+        <!-- Banner KPIs -->
+        <div class="backtest-banner">
+            <div class="banner-card">
+                <div class="lbl">Net Return</div>
+                <div id="btNetReturn" class="val">$0.00</div>
+            </div>
+            <div class="banner-card">
+                <div class="lbl">Total Trades</div>
+                <div id="btTotalTrades" class="val">0</div>
+            </div>
+            <div class="banner-card">
+                <div class="lbl">Win Rate</div>
+                <div id="btWinRate" class="val">0.00%</div>
+            </div>
+            <div class="banner-card">
+                <div class="lbl">Profit Factor</div>
+                <div id="btProfitFactor" class="val">0.00</div>
+            </div>
+            <div class="banner-card">
+                <div class="lbl">Max Drawdown</div>
+                <div id="btMaxDrawdown" class="val">0.00%</div>
+            </div>
+        </div>
+
+        <div class="backtest-grid">
+            <!-- Sidebar: Parameters -->
+            <div class="card" style="height: fit-content;">
+                <div class="card-title">Backtest Settings</div>
+                <div class="input-group">
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Select Strategies (Check to combine)</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem; background: var(--bg-card); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color); max-height: 180px; overflow-y: auto;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; font-family: var(--font-main);">
+                            <input type="checkbox" name="btStrategyCheck" value="AdaptiveTrendFollowing" checked style="width: auto; cursor: pointer;">
+                            Adaptive Trend Following
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; font-family: var(--font-main);">
+                            <input type="checkbox" name="btStrategyCheck" value="PullbackContinuation" style="width: auto; cursor: pointer;">
+                            Pullback Continuation
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; font-family: var(--font-main);">
+                            <input type="checkbox" name="btStrategyCheck" value="MeanReversion" style="width: auto; cursor: pointer;">
+                            Mean Reversion
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; font-family: var(--font-main);">
+                            <input type="checkbox" name="btStrategyCheck" value="VolatilityBreakout" style="width: auto; cursor: pointer;">
+                            Volatility Breakout
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.9rem; font-family: var(--font-main);">
+                            <input type="checkbox" name="btStrategyCheck" value="LondonSessionMomentum" style="width: auto; cursor: pointer;">
+                            London Session Momentum
+                        </label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="btSymbol">Symbol</label>
+                    <select id="btSymbol">
+                        <option value="EURUSD">EURUSD</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="btStartDate">Start Date</label>
+                    <input type="date" id="btStartDate" value="2018-01-01">
+                </div>
+                <div class="input-group">
+                    <label for="btEndDate">End Date</label>
+                    <input type="date" id="btEndDate" value="2018-12-31">
+                </div>
+                <div class="input-group">
+                    <label for="btCapital">Initial Capital ($)</label>
+                    <input type="number" id="btCapital" value="10000" min="100" max="1000000">
+                </div>
+
+                <button id="btnRunBacktest" class="btn btn-primary" style="margin-top: 1rem;">RUN BACKTEST</button>
+                <button id="btnTestAll" class="btn" style="margin-top: 0.5rem; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);">TEST ALL STRATEGIES</button>
+            </div>
+
+            <!-- Main Panel: Charts & Results Table -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <!-- Equity Curve Card -->
+                <div class="card" id="backtestChartCard">
+                    <!-- Spinner Overlay -->
+                    <div id="loadingOverlay" class="loading-overlay">
+                        <div class="spinner"></div>
+                        <span style="font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-primary);">Processing 2018 Market Data...</span>
+                    </div>
+
+                    <div class="card-title">Equity Curve Chart</div>
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="backtestChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Strategy Comparison Card -->
+                <div class="card" id="strategyComparisonCard" style="display: none;">
+                    <div class="card-title">Strategy Comparison Matrix</div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Strategy Name</th>
+                                    <th style="text-align: center;">Trades</th>
+                                    <th style="text-align: center;">Win Rate</th>
+                                    <th style="text-align: center;">Total PnL (Pips)</th>
+                                    <th style="text-align: center;">Avg Pips/Trade</th>
+                                    <th style="text-align: center;">CAGR</th>
+                                    <th style="text-align: center;">Sharpe Ratio</th>
+                                    <th style="text-align: center;">Max Drawdown</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Advanced Analysis Card -->
+                <div class="card" id="advancedAnalysisCard" style="display: none;">
+                    <div class="card-title">Advanced Quantitative Analytics</div>
+                    
+                    <!-- Advanced KPI Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Avg Win / Avg Loss</div>
+                            <div id="btAvgWinLoss" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00 / 0.00 pips</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Risk-Reward Ratio</div>
+                            <div id="btRiskReward" class="value" style="font-size: 1.15rem; font-weight: 600;">1:0.00</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Expectancy</div>
+                            <div id="btExpectancy" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00 pips</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Max Win / Max Loss</div>
+                            <div id="btMaxWinLoss" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00 / 0.00 pips</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Win / Loss Streaks</div>
+                            <div id="btStreaks" class="value" style="font-size: 1.15rem; font-weight: 600;">0 wins / 0 losses</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Best / Worst Closed Day</div>
+                            <div id="btBestWorstDay" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00 / 0.00 pips</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Profitable / Losing Days</div>
+                            <div id="btDayRatios" class="value" style="font-size: 1.15rem; font-weight: 600;">0 days / 0 days</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Profit Factor</div>
+                            <div id="btPfAdvanced" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Sharpe Ratio</div>
+                            <div id="btSharpe" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">CAGR</div>
+                            <div id="btCAGR" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00%</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Recovery Factor</div>
+                            <div id="btRecoveryFactor" class="value" style="font-size: 1.15rem; font-weight: 600;">0.00</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label" style="font-size: 0.75rem;">Avg Trade Duration</div>
+                            <div id="btAvgDuration" class="value" style="font-size: 1.15rem; font-weight: 600;">0h 0m</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Breakdown Charts -->
+                    <div class="card-title">Seasonality & Strategy Distribution</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; height: 260px;">
+                        <div style="position: relative; height: 100%;">
+                            <h4 style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.5rem; text-transform: uppercase; font-family: var(--font-mono);">PnL by Strategy (Pips)</h4>
+                            <div style="height: 200px;"><canvas id="chartStrategy"></canvas></div>
+                        </div>
+                        <div style="position: relative; height: 100%;">
+                            <h4 style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.5rem; text-transform: uppercase; font-family: var(--font-mono);">PnL by Weekday (Pips)</h4>
+                            <div style="height: 200px;"><canvas id="chartWeekday"></canvas></div>
+                        </div>
+                        <div style="position: relative; height: 100%;">
+                            <h4 style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-bottom: 0.5rem; text-transform: uppercase; font-family: var(--font-mono);">PnL by Hour of Day (Pips)</h4>
+                            <div style="height: 200px;"><canvas id="chartHour"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Breakdowns Container -->
+                <div id="monthlyBreakdownCard" class="card" style="display: none;">
+                    <div class="card-title">Monthly Quantitative Breakdowns</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Table 1: Monthly Performance Details -->
+                        <div>
+                            <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem; text-transform: uppercase; font-family: var(--font-mono); text-align: left;">Monthly Performance Details</h4>
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left;">Month</th>
+                                            <th style="text-align: center;">Trades</th>
+                                            <th style="text-align: center;">Profit (Pips)</th>
+                                            <th style="text-align: center;">Win Rate</th>
+                                            <th style="text-align: center;">PF</th>
+                                            <th style="text-align: center;">DD</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyPerformanceBody">
+                                        <!-- Dynamically Populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Table 2: Monthly Trade Distribution -->
+                        <div>
+                            <h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem; text-transform: uppercase; font-family: var(--font-mono); text-align: left;">Monthly Trade Distribution</h4>
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left;">Month</th>
+                                            <th style="text-align: center;">ATF</th>
+                                            <th style="text-align: center;">PC</th>
+                                            <th style="text-align: center;">MR</th>
+                                            <th style="text-align: center;">VB</th>
+                                            <th style="text-align: center;">LSM</th>
+                                            <th style="text-align: center; font-weight: bold;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyDistributionBody">
+                                        <!-- Dynamically Populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trades Log Card -->
+                <div class="card">
+                    <div class="card-title" style="flex-wrap: wrap; gap: 1rem;">
+                        <span>Backtest Executed Trades Log</span>
+                        
+                        <!-- Filters Panel -->
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem;">
+                                <span style="color: var(--text-secondary);">Strategy:</span>
+                                <select id="filterStrategy" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.8rem; outline: none; width: auto; font-family: var(--font-main);">
+                                    <option value="ALL">All Strategies</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem;">
+                                <span style="color: var(--text-secondary);">Outcome:</span>
+                                <select id="filterOutcome" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.8rem; outline: none; width: auto; font-family: var(--font-main);">
+                                    <option value="ALL">All Trades</option>
+                                    <option value="WIN">Wins Only</option>
+                                    <option value="LOSS">Losses Only</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem;">
+                                <span style="color: var(--text-secondary);">Reason:</span>
+                                <select id="filterReason" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.8rem; outline: none; width: auto; font-family: var(--font-main);">
+                                    <option value="ALL">All Exits</option>
+                                    <option value="trailing_stop">Trailing Stop</option>
+                                    <option value="initial_stop">Initial Stop</option>
+                                    <option value="custom_exit">Custom Exit</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto; max-height: 400px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Strategy</th>
+                                    <th>Entry Time</th>
+                                    <th>Entry Price</th>
+                                    <th>Exit Time</th>
+                                    <th>Exit Price</th>
+                                    <th>PnL (Pips)</th>
+                                    <th>PnL (USD)</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody id="btTradesTableBody">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No backtest data loaded. Configure settings and click "Run Backtest".</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TAB SWAP LOGIC
+        const tabLive = document.getElementById('tabLive');
+        const tabBacktest = document.getElementById('tabBacktest');
+        const contentLive = document.getElementById('contentLive');
+        const contentBacktest = document.getElementById('contentBacktest');
+
+        tabLive.addEventListener('click', () => {
+            tabLive.classList.add('active');
+            tabBacktest.classList.remove('active');
+            contentLive.classList.add('active');
+            contentBacktest.classList.remove('active');
+        });
+
+        tabBacktest.addEventListener('click', () => {
+            tabBacktest.classList.add('active');
+            tabLive.classList.remove('active');
+            contentBacktest.classList.add('active');
+            contentLive.classList.remove('active');
+            
+            // Adjust chart sizing on display
+            if (backtestChart) backtestChart.resize();
+        });
+
+        // ==========================================
+        // SECTION 1: LIVE SIMULATOR LOGIC
+        // ==========================================
+        let balance = 10000.00;
+        let equity = 10000.00;
+        let position = null;
+        let realizedPnl = 0.00;
+        
+        const pipSize = 0.0001;
+        const pipValueStandardLot = 10.0; 
+        
+        let currentPrice = 1.20450;
+        let priceHistory = [];
+        let timeHistory = [];
+        let tradeLogs = [];
+        
+        // Live Chart Initialization
+        const ctxLive = document.getElementById('priceChart').getContext('2d');
+        let seedPrice = 1.20450;
+        for (let i = 30; i >= 0; i--) {
+            seedPrice += (Math.random() - 0.5) * 0.0002;
+            priceHistory.push(seedPrice);
+            timeHistory.push(new Date(Date.now() - i * 3000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}));
+        }
+        currentPrice = seedPrice;
+        document.getElementById('priceDisplay').textContent = currentPrice.toFixed(5);
+        
+        const priceChart = new Chart(ctxLive, {
+            type: 'line',
+            data: {
+                labels: timeHistory,
+                datasets: [{
+                    data: priceHistory,
+                    borderColor: '#6366f1',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.02)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } },
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.02)' }, ticks: { color: '#94a3b8', callback: function(val) { return val.toFixed(5); } } }
+                }
+            }
+        });
+
+        // Price Feed Simulator Loop
+        setInterval(() => {
+            let change = (Math.random() - 0.5) * 0.00008;
+            let lastPrice = currentPrice;
+            currentPrice += change;
+            
+            const displayEl = document.getElementById('priceDisplay');
+            displayEl.textContent = currentPrice.toFixed(5);
+            displayEl.className = 'live-price-display ' + (currentPrice > lastPrice ? 'price-up' : 'price-down');
+            
+            priceHistory.push(currentPrice);
+            priceHistory.shift();
+            timeHistory.push(new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}));
+            timeHistory.shift();
+            priceChart.update('none');
+            
+            updateFinance();
+        }, 1500);
+
+        function updateFinance() {
+            let unrealized = 0.00;
+            if (position) {
+                let pips = (position.side === 'BUY' ? (currentPrice - position.entryPrice) : (position.entryPrice - currentPrice)) / pipSize;
+                unrealized = pips * pipValueStandardLot * position.size;
+                position.unrealizedPnl = unrealized;
+            }
+            equity = balance + unrealized;
+            
+            document.getElementById('statBalance').textContent = `$${balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('statEquity').textContent = `$${equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            const pnlEl = document.getElementById('statPnl');
+            pnlEl.textContent = `${unrealized >= 0 ? '+' : ''}$${unrealized.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            pnlEl.className = 'value ' + (unrealized > 0 ? 'pnl-positive' : (unrealized < 0 ? 'pnl-negative' : ''));
+            
+            renderPositions();
+        }
+
+        function executeOrder(action, size) {
+            if (size <= 0) return;
+            if (action === 'BUY') {
+                if (position && position.side === 'SELL') { netPosition('BUY', size); } 
+                else {
+                    if (position) {
+                        let newSize = position.size + size;
+                        position.entryPrice = ((position.entryPrice * position.size) + (currentPrice * size)) / newSize;
+                        position.size = newSize;
+                    } else {
+                        position = { symbol: 'EURUSD', side: 'BUY', size: size, entryPrice: currentPrice, unrealizedPnl: 0.00 };
+                    }
+                    recordLog('BUY', size, currentPrice);
+                }
+            } else if (action === 'SELL') {
+                if (position && position.side === 'BUY') { netPosition('SELL', size); } 
+                else {
+                    if (position) {
+                        let newSize = position.size + size;
+                        position.entryPrice = ((position.entryPrice * position.size) + (currentPrice * size)) / newSize;
+                        position.size = newSize;
+                    } else {
+                        position = { symbol: 'EURUSD', side: 'SELL', size: size, entryPrice: currentPrice, unrealizedPnl: 0.00 };
+                    }
+                    recordLog('SELL', size, currentPrice);
+                }
+            }
+            updateFinance();
+        }
+
+        function netPosition(orderSide, orderSize) {
+            let pips = (position.side === 'BUY' ? (currentPrice - position.entryPrice) : (position.entryPrice - currentPrice)) / pipSize;
+            if (orderSize >= position.size) {
+                let realized = pips * pipValueStandardLot * position.size;
+                balance += realized;
+                recordLog('CLOSE (NET)', position.size, currentPrice, realized);
+                let leftover = orderSize - position.size;
+                if (leftover > 0) {
+                    position = { symbol: 'EURUSD', side: orderSide, size: leftover, entryPrice: currentPrice, unrealizedPnl: 0.00 };
+                    recordLog(orderSide, leftover, currentPrice);
+                } else {
+                    position = null;
+                }
+            } else {
+                let realized = pips * pipValueStandardLot * orderSize;
+                balance += realized;
+                position.size -= orderSize;
+                recordLog('PARTIAL CLOSE (NET)', orderSize, currentPrice, realized);
+            }
+        }
+
+        function closeEntire() {
+            if (!position) return;
+            let pips = (position.side === 'BUY' ? (currentPrice - position.entryPrice) : (position.entryPrice - currentPrice)) / pipSize;
+            let realized = pips * pipValueStandardLot * position.size;
+            balance += realized;
+            recordLog('CLOSE', position.size, currentPrice, realized);
+            position = null;
+            updateFinance();
+        }
+
+        function partialClose(fraction) {
+            if (!position) return;
+            let sizeToClose = position.size * fraction;
+            if (sizeToClose < 0.01) return;
+            let pips = (position.side === 'BUY' ? (currentPrice - position.entryPrice) : (position.entryPrice - currentPrice)) / pipSize;
+            let realized = pips * pipValueStandardLot * sizeToClose;
+            balance += realized;
+            position.size -= sizeToClose;
+            recordLog('PARTIAL_CLOSE', sizeToClose, currentPrice, realized);
+            if (position.size < 0.01) position = null;
+            updateFinance();
+        }
+
+        function reversePosition() {
+            if (!position) return;
+            let oldSide = position.side, size = position.size;
+            closeEntire();
+            executeOrder(oldSide === 'BUY' ? 'SELL' : 'BUY', size);
+        }
+
+        function renderPositions() {
+            const tbody = document.getElementById('positionTableBody');
+            const badge = document.getElementById('posCountBadge');
+            if (!position) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No active positions. Execute an order on the side panel.</td></tr>`;
+                badge.textContent = "0 Open";
+                badge.style.background = "rgba(255,255,255,0.06)";
+                badge.style.color = "var(--text-secondary)";
+                return;
+            }
+            badge.textContent = "1 Open";
+            badge.style.background = position.side === 'BUY' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+            badge.style.color = position.side === 'BUY' ? 'var(--color-buy)' : 'var(--color-sell)';
+            
+            const isPnlPositive = position.unrealizedPnl >= 0;
+            tbody.innerHTML = `
+                <tr>
+                    <td style="font-family: var(--font-mono); font-weight: 500;">${position.symbol}</td>
+                    <td><span class="action-tag ${position.side === 'BUY' ? 'tag-buy' : 'tag-sell'}">${position.side}</span></td>
+                    <td style="font-family: var(--font-mono);">${position.size.toFixed(2)}</td>
+                    <td style="font-family: var(--font-mono);">${position.entryPrice.toFixed(5)}</td>
+                    <td style="font-family: var(--font-mono);">${currentPrice.toFixed(5)}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700;" class="${isPnlPositive ? 'pnl-positive' : 'pnl-negative'}">${isPnlPositive ? '+' : ''}$${position.unrealizedPnl.toFixed(2)}</td>
+                    <td><button onclick="closeEntire()" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--color-sell); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: var(--font-mono);">CLOSE</button></td>
+                </tr>
+            `;
+        }
+
+        function recordLog(action, size, price, realized = 0.00) {
+            tradeLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), action, size, price, realized });
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const logContainer = document.getElementById('logList');
+            if (tradeLogs.length === 0) {
+                logContainer.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 1rem 0; font-size: 0.85rem;">No executions recorded yet.</div>`;
+                return;
+            }
+            logContainer.innerHTML = tradeLogs.map(log => {
+                let tagClass = 'tag-close';
+                if (log.action === 'BUY') tagClass = 'tag-buy';
+                if (log.action === 'SELL') tagClass = 'tag-sell';
+                if (log.action === 'PARTIAL_CLOSE') tagClass = 'tag-partial';
+                if (log.action === 'REVERSE') tagClass = 'tag-reverse';
+                
+                const showPnl = log.realized !== 0.00;
+                const isPositive = log.realized > 0;
+                return `
+                    <div class="log-item">
+                        <div class="details">
+                            <div><span class="action-tag ${tagClass}">${log.action}</span><strong>EURUSD</strong></div>
+                            <div style="color: var(--text-secondary); margin-top: 0.2rem;">Size: ${log.size.toFixed(2)} Lots @ ${log.price.toFixed(5)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="pnl-col ${isPositive ? 'pnl-positive' : 'pnl-negative'}">${showPnl ? (isPositive ? '+' : '') + '$' + log.realized.toFixed(2) : ''}</div>
+                            <div class="time">${log.time}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Live Click Bindings
+        document.getElementById('btnBuy').addEventListener('click', () => executeOrder('BUY', parseFloat(document.getElementById('lotSize').value)));
+        document.getElementById('btnSell').addEventListener('click', () => executeOrder('SELL', parseFloat(document.getElementById('lotSize').value)));
+        document.getElementById('btnClose').addEventListener('click', closeEntire);
+        document.getElementById('btnPartial').addEventListener('click', () => partialClose(0.5));
+        document.getElementById('btnReverse').addEventListener('click', reversePosition);
+
+
+        // ==========================================
+        // SECTION 2: HISTORICAL BACKTESTER LAB
+        // ==========================================
+        let backtestChart = null;
+        let chartStrategyInstance = null;
+        let chartWeekdayInstance = null;
+        let chartHourInstance = null;
+        let loadedTrades = [];
+        
+        // Dynamic Filter functions
+        function applyTradesFilter() {
+            const stratFilter = document.getElementById('filterStrategy').value;
+            const outcomeFilter = document.getElementById('filterOutcome').value;
+            const reasonFilter = document.getElementById('filterReason').value;
+
+            const filtered = loadedTrades.filter(t => {
+                const matchStrat = (stratFilter === 'ALL' || t.strategy === stratFilter);
+                
+                let matchOutcome = true;
+                if (outcomeFilter === 'WIN') matchOutcome = t.pnl_pips > 0;
+                else if (outcomeFilter === 'LOSS') matchOutcome = t.pnl_pips <= 0;
+                
+                const matchReason = (reasonFilter === 'ALL' || t.exit_reason === reasonFilter);
+                
+                return matchStrat && matchOutcome && matchReason;
+            });
+
+            renderTradesList(filtered);
+        }
+
+        document.getElementById('filterStrategy').addEventListener('change', applyTradesFilter);
+        document.getElementById('filterOutcome').addEventListener('change', applyTradesFilter);
+        document.getElementById('filterReason').addEventListener('change', applyTradesFilter);
+
+        function renderTradesList(tradesToRender) {
+            const tbody = document.getElementById('btTradesTableBody');
+            if (tradesToRender.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No trades found matching current filter parameters.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = tradesToRender.map(t => {
+                const isWin = t.pnl_pips > 0;
+                return `
+                    <tr>
+                        <td style="font-family: var(--font-mono);">${t.id}</td>
+                        <td><span style="font-size: 0.8rem; background: rgba(99,102,241,0.1); color: #818cf8; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 500;">${t.strategy}</span></td>
+                        <td style="font-size: 0.8rem; color: var(--text-secondary);">${t.entry_time}</td>
+                        <td style="font-family: var(--font-mono);">${t.entry_price.toFixed(5)}</td>
+                        <td style="font-size: 0.8rem; color: var(--text-secondary);">${t.exit_time}</td>
+                        <td style="font-family: var(--font-mono);">${t.exit_price.toFixed(5)}</td>
+                        <td style="font-family: var(--font-mono); font-weight: 600;" class="${isWin ? 'pnl-positive' : 'pnl-negative'}">${t.pnl_pips > 0 ? '+' : ''}${t.pnl_pips.toFixed(2)}</td>
+                        <td style="font-family: var(--font-mono); font-weight: 600;" class="${isWin ? 'pnl-positive' : 'pnl-negative'}">${t.pnl_usd > 0 ? '+' : ''}$${t.pnl_usd.toFixed(2)}</td>
+                        <td><span style="font-size: 0.8rem; background: rgba(255,255,255,0.04); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary);">${t.exit_reason || 'stop_loss'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        const ctxBacktest = document.getElementById('backtestChart').getContext('2d');
+
+        document.getElementById('btnRunBacktest').addEventListener('click', async () => {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
+            
+            const checkboxes = document.querySelectorAll('input[name="btStrategyCheck"]:checked');
+            const strategies = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (strategies.length === 0) {
+                alert("Please select at least one strategy to run the backtest.");
+                overlay.style.display = 'none';
+                return;
+            }
+
+            const symbol = document.getElementById('btSymbol').value;
+            const start_date = document.getElementById('btStartDate').value;
+            const end_date = document.getElementById('btEndDate').value;
+            const initial_capital = parseFloat(document.getElementById('btCapital').value);
+
+            try {
+                const response = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ strategies, symbol, start_date, end_date, initial_capital })
+                });
+
+                const data = await response.json();
+                overlay.style.display = 'none';
+
+                if (data.error) {
+                    alert(`Error running backtest: ${data.error}`);
+                    return;
+                }
+
+                // Show advanced analysis card
+                document.getElementById('advancedAnalysisCard').style.display = 'block';
+
+                // Render Statistics Banner
+                const sum = data.summary;
+                const profitUSD = sum.final_equity - initial_capital;
+                
+                document.getElementById('btNetReturn').textContent = `${profitUSD >= 0 ? '+' : ''}$${profitUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('btNetReturn').className = 'val ' + (profitUSD > 0 ? 'pnl-positive' : (profitUSD < 0 ? 'pnl-negative' : ''));
+                
+                document.getElementById('btTotalTrades').textContent = sum.total_trades;
+                document.getElementById('btWinRate').textContent = `${sum.win_rate.toFixed(2)}%`;
+                document.getElementById('btProfitFactor').textContent = sum.profit_factor.toFixed(2);
+                document.getElementById('btMaxDrawdown').textContent = `${sum.max_drawdown.toFixed(2)}%`;
+
+                // Render Advanced Stats
+                document.getElementById('btAvgWinLoss').innerHTML = `<span class="pnl-positive">+${sum.avg_win_pips.toFixed(1)}</span> / <span class="pnl-negative">${sum.avg_loss_pips.toFixed(1)}</span> pips`;
+                document.getElementById('btRiskReward').textContent = `1:${sum.risk_reward_ratio.toFixed(2)}`;
+                document.getElementById('btExpectancy').textContent = `${sum.expectancy_pips >= 0 ? '+' : ''}${sum.expectancy_pips.toFixed(2)} pips / trade`;
+                document.getElementById('btMaxWinLoss').innerHTML = `<span class="pnl-positive">+${sum.best_trade_pips.toFixed(1)}</span> / <span class="pnl-negative">${sum.worst_trade_pips.toFixed(1)}</span> pips`;
+                document.getElementById('btStreaks').textContent = `${sum.consec_wins} wins / ${sum.consec_losses} losses`;
+                document.getElementById('btBestWorstDay').innerHTML = `<span class="pnl-positive">+${sum.best_day_pips.toFixed(1)}</span> / <span class="pnl-negative">${sum.worst_day_pips.toFixed(1)}</span> pips`;
+                document.getElementById('btDayRatios').textContent = `${sum.profitable_days} green / ${sum.losing_days} red days`;
+                document.getElementById('btPfAdvanced').textContent = sum.profit_factor.toFixed(2);
+                document.getElementById('btSharpe').textContent = sum.sharpe_ratio.toFixed(2);
+                document.getElementById('btCAGR').textContent = `${sum.cagr.toFixed(2)}%`;
+                document.getElementById('btRecoveryFactor').textContent = sum.recovery_factor.toFixed(2);
+                document.getElementById('btAvgDuration').textContent = sum.avg_duration;
+
+                // Show monthly breakdown card
+                document.getElementById('monthlyBreakdownCard').style.display = 'block';
+
+                // 1. Render Monthly Performance Details Table
+                const tbodyPerf = document.getElementById('monthlyPerformanceBody');
+                tbodyPerf.innerHTML = data.monthly_performance.map(m => {
+                    const isPositive = m.profit > 0;
+                    return `
+                        <tr>
+                            <td style="text-align: left; font-weight: 600; color: var(--text-primary);">${m.month}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${m.trades}</td>
+                            <td style="font-family: var(--font-mono); font-weight: 600; text-align: center;" class="${isPositive ? 'pnl-positive' : (m.profit < 0 ? 'pnl-negative' : '')}">${m.profit > 0 ? '+' : ''}${m.profit.toFixed(2)}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${m.win_rate.toFixed(1)}%</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${m.pf.toFixed(2)}</td>
+                            <td style="font-family: var(--font-mono); text-align: center; color: var(--color-sell);">${m.dd.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // 2. Render Monthly Trade Distribution Table
+                const tbodyDist = document.getElementById('monthlyDistributionBody');
+                tbodyDist.innerHTML = data.monthly_distribution.map(m => {
+                    const counts = m.counts;
+                    return `
+                        <tr>
+                            <td style="text-align: left; font-weight: 600; color: var(--text-primary);">${m.month}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${counts.AdaptiveTrendFollowing || 0}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${counts.PullbackContinuation || 0}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${counts.MeanReversion || 0}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${counts.VolatilityBreakout || 0}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${counts.LondonSessionMomentum || 0}</td>
+                            <td style="font-family: var(--font-mono); text-align: center; font-weight: bold; color: var(--text-primary);">${m.total}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Render Equity Curve Chart
+                const labels = data.equity_curve.map(pt => pt.time);
+                const values = data.equity_curve.map(pt => pt.equity);
+
+                if (backtestChart) {
+                    backtestChart.destroy();
+                }
+
+                backtestChart = new Chart(ctxBacktest, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Account Equity ($)',
+                            data: values,
+                            borderColor: '#818cf8',
+                            borderWidth: 2,
+                            fill: true,
+                            backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                            tension: 0.1,
+                            pointBackgroundColor: '#818cf8',
+                            pointRadius: labels.length > 100 ? 0 : 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: 'rgba(255, 255, 255, 0.02)' }, ticks: { color: '#94a3b8', maxTicksLimit: 10 } },
+                            y: { grid: { color: 'rgba(255, 255, 255, 0.02)' }, ticks: { color: '#94a3b8', callback: function(val) { return '$' + val.toLocaleString(); } } }
+                        }
+                    }
+                });
+
+                // Render Seasonality and Breakdown Charts
+                // 1. Strategy Breakdown Chart
+                const stratLabels = Object.keys(data.pnl_by_strategy);
+                const stratValues = Object.values(data.pnl_by_strategy);
+                if (chartStrategyInstance) chartStrategyInstance.destroy();
+                chartStrategyInstance = new Chart(document.getElementById('chartStrategy').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: stratLabels.map(s => s.replace('Strategy', '')),
+                        datasets: [{
+                            data: stratValues,
+                            backgroundColor: stratValues.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'),
+                            borderColor: stratValues.map(v => v >= 0 ? 'var(--color-buy)' : 'var(--color-sell)'),
+                            borderWidth: 1.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+                            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+
+                // 2. Weekday Breakdown Chart
+                const dowLabels = Object.keys(data.pnl_by_dow);
+                const dowValues = Object.values(data.pnl_by_dow);
+                if (chartWeekdayInstance) chartWeekdayInstance.destroy();
+                chartWeekdayInstance = new Chart(document.getElementById('chartWeekday').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: dowLabels.map(d => d.substring(0, 3)),
+                        datasets: [{
+                            data: dowValues,
+                            backgroundColor: dowValues.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'),
+                            borderColor: dowValues.map(v => v >= 0 ? 'var(--color-buy)' : 'var(--color-sell)'),
+                            borderWidth: 1.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+                            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+
+                // 3. Hour Breakdown Chart
+                const hourLabels = Object.keys(data.pnl_by_hour).map(h => `${h}:00`);
+                const hourValues = Object.values(data.pnl_by_hour);
+                if (chartHourInstance) chartHourInstance.destroy();
+                chartHourInstance = new Chart(document.getElementById('chartHour').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: hourLabels,
+                        datasets: [{
+                            data: hourValues,
+                            backgroundColor: hourValues.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'),
+                            borderColor: hourValues.map(v => v >= 0 ? 'var(--color-buy)' : 'var(--color-sell)'),
+                            borderWidth: 1.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 8 }, maxTicksLimit: 12 } },
+                            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+
+                // Store loaded trades globally for dynamic filtering
+                loadedTrades = data.trades;
+                
+                // Populate strategy filter dropdown options dynamically
+                const uniqueStrats = [...new Set(data.trades.map(t => t.strategy))];
+                const filterStratEl = document.getElementById('filterStrategy');
+                filterStratEl.innerHTML = '<option value="ALL">All Strategies</option>';
+                uniqueStrats.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    filterStratEl.appendChild(opt);
+                });
+
+                // Initial render of trades log table
+                renderTradesList(loadedTrades);
+
+            } catch (err) {
+                overlay.style.display = 'none';
+                alert(`Network error running backtest: ${err}`);
+            }
+        });
+
+        document.getElementById('btnTestAll').addEventListener('click', async () => {
+            const overlay = document.getElementById('loadingOverlay');
+            const overlayText = overlay.querySelector('span');
+            overlay.style.display = 'flex';
+            
+            const symbol = document.getElementById('btSymbol').value;
+            const start_date = document.getElementById('btStartDate').value;
+            const end_date = document.getElementById('btEndDate').value;
+            const initial_capital = parseFloat(document.getElementById('btCapital').value);
+
+            const strategiesToTest = [
+                'AdaptiveTrendFollowing',
+                'PullbackContinuation',
+                'MeanReversion',
+                'VolatilityBreakout',
+                'LondonSessionMomentum'
+            ];
+
+            const tbodyComp = document.getElementById('comparisonTableBody');
+            tbodyComp.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 2rem;">Testing all strategies... Please wait.</td></tr>';
+            
+            try {
+                const results = [];
+                for (const sName of strategiesToTest) {
+                    overlayText.textContent = `Running Backtest: ${sName}...`;
+                    const response = await fetch('/api/backtest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ strategies: [sName], symbol, start_date, end_date, initial_capital })
+                    });
+                    const resData = await response.json();
+                    if (!resData.error) {
+                        results.push({ name: sName, sum: resData.summary });
+                    }
+                }
+
+                overlay.style.display = 'none';
+                overlayText.textContent = `Processing 2018 Market Data...`;
+
+                // Show comparison card
+                document.getElementById('strategyComparisonCard').style.display = 'block';
+
+                tbodyComp.innerHTML = results.map(r => {
+                    const sum = r.sum;
+                    const pnlVal = sum.total_pips;
+                    const avgPips = sum.avg_pips;
+                    const isWin = pnlVal > 0;
+                    return `
+                        <tr>
+                            <td style="text-align: left; font-weight: 600; color: var(--text-primary); font-family: var(--font-main);">${r.name}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${sum.total_trades}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${sum.win_rate.toFixed(2)}%</td>
+                            <td style="font-family: var(--font-mono); font-weight: 600; text-align: center;" class="${isWin ? 'pnl-positive' : 'pnl-negative'}">${pnlVal > 0 ? '+' : ''}${pnlVal.toFixed(2)}</td>
+                            <td style="font-family: var(--font-mono); font-weight: 600; text-align: center;" class="${avgPips > 0 ? 'pnl-positive' : 'pnl-negative'}">${avgPips > 0 ? '+' : ''}${avgPips.toFixed(2)}</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${sum.cagr.toFixed(2)}%</td>
+                            <td style="font-family: var(--font-mono); text-align: center;">${sum.sharpe_ratio.toFixed(2)}</td>
+                            <td style="font-family: var(--font-mono); text-align: center; color: var(--color-sell);">${sum.max_drawdown.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                overlay.style.display = 'none';
+                overlayText.textContent = `Processing 2018 Market Data...`;
+                alert(`Error testing all strategies: ${err}`);
+            }
+        });
+    </script>
+</body>
+</html>
