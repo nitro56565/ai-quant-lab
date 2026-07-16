@@ -83,8 +83,8 @@ class LondonSessionMomentum(Strategy):
         # 2. H1 Trend: EMA 50 > EMA 200
         df['h1_trend_ok'] = df['EMA50_H1'] > df['EMA200_H1']
         
-        # 3. Session Window (08:00 - 11:00 UTC)
-        df['session_active'] = (df.index.hour >= 8) & (df.index.hour <= 11)
+        # 3. Session Window (08:00 - 10:00 UTC) - optimized narrow window
+        df['session_active'] = (df.index.hour >= 8) & (df.index.hour <= 10)
         
         # 4. M15 Donchian breakout (close breaks above shifted upper band)
         df['m15_breakout'] = df['close'] > df['DC_upper_20_M15'].shift(1)

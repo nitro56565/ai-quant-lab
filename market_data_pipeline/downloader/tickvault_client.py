@@ -25,10 +25,18 @@ class TickVaultClient:
         """
         self.session = requests.Session()
         
+        # Sane browser headers to prevent Dukascopy rate limiting & connection drops
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': '*/*',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive'
+        })
+        
         # Configure retry strategy and connection pooling for concurrent requests
         retries = Retry(
             total=5,
-            backoff_factor=0.3,
+            backoff_factor=0.5,
             status_forcelist=[500, 502, 503, 504],
             raise_on_status=False
         )

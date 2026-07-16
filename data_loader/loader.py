@@ -33,6 +33,7 @@ class DataLoader:
         
         # Memory Cache: key is (symbol, timeframe, year) -> DataFrame
         self._cache = {}
+        self._req_cache = {}
         
     def get_symbol_metadata(self, symbol):
         """
@@ -88,6 +89,13 @@ class DataLoader:
         Returns:
             DataFrame with DatetimeIndex index and open, high, low, close, volume columns
         """
+        # 0. Check Request Cache (returns instant copy)
+        start_str = request.start.strftime('%Y-%m-%d %H:%M:%S') if request.start else None
+        end_str = request.end.strftime('%Y-%m-%d %H:%M:%S') if request.end else None
+        req_key = (request.symbol.upper().strip(), request.timeframe.lower().strip(), start_str, end_str, request.price_type.lower().strip())
+        if req_key in self._req_cache:
+            return self._req_cache[req_key].copy()
+            
         # 1. Load Symbol Metadata
         metadata = self.get_symbol_metadata(request.symbol)
         
@@ -153,6 +161,10 @@ class DataLoader:
                     elif not isinstance(df.index, pd.DatetimeIndex):
                         df.index = pd.to_datetime(df.index)
                         
+                    # Standardize timezone to naive (prevent timezone comparison errors)
+                    if df.index.tz is not None:
+                        df.index = df.index.tz_localize(None)
+                        
                     self._cache[cache_key] = df
                 except Exception as e:
                     raise CorruptDataError(f"Failed to read data file {file_path.name}: {e}")
@@ -192,7 +204,10 @@ class DataLoader:
         # 4. Data Validation
         self.validate_data(df_formatted, asset_type=metadata.get('asset_type', 'forex'))
         
-        return df_formatted
+        # 5. Save copy to request cache
+        self._req_cache[req_key] = df_formatted
+        
+        return df_formatted.copy()
 
     def _format_prices(self, df, price_type):
         """Format raw bid/ask OHLCV columns to standardized OHLCV."""
