@@ -15,8 +15,8 @@ import numpy as np
 # ⚙️ CONFIGURATION SETTINGS (Edit these to modify your backtest run)
 # =====================================================================
 SYMBOL = "EURUSD"                # Forex pair to backtest (e.g. "EURUSD")
-START_DATE = "2021-01-01"        # Start date (YYYY-MM-DD)
-END_DATE = "2021-12-31"          # End date (YYYY-MM-DD)
+START_DATE = "2022-01-01"        # Start date (YYYY-MM-DD)
+END_DATE = "2025-12-31"          # End date (YYYY-MM-DD)
 INITIAL_CAPITAL = 10000.0        # Starting balance in USD
 
 # Select strategies to combine into your portfolio.
@@ -26,9 +26,9 @@ INITIAL_CAPITAL = 10000.0        # Starting balance in USD
 #   - "MeanReversion"           (Strategy 3: Quiet market Bollinger breakout)
 #   - "VolatilityBreakout"      (Strategy 4: Bollinger squeeze / Donchian breakout)
 #   - "LondonSessionMomentum"   (Strategy 5: London session opening momentum breakout)
+#   - "MLConsensusStrategy"     (Strategy 6: ML expected value consensus & session-filtered strategy)
 SELECTED_STRATEGIES = [
-    "LondonSessionMomentum",
-    "PullbackContinuation"
+    "MLConsensusStrategy"
 ]
 # =====================================================================
 
@@ -61,7 +61,8 @@ def main():
         "PullbackContinuation": se.PullbackContinuation,
         "MeanReversion": se.MeanReversion,
         "VolatilityBreakout": se.VolatilityBreakout,
-        "LondonSessionMomentum": se.LondonSessionMomentum
+        "LondonSessionMomentum": se.LondonSessionMomentum,
+        "MLConsensusStrategy": se.MLConsensusStrategy
     }
 
     # Verify choices

@@ -9,14 +9,9 @@ from execution_engine import ExecutionEngine
 
 app = Flask(__name__, static_folder='.')
 
-# Map of supported strategies
+# Map of supported strategies (Institutional AI Master Strategy)
 STRATEGIES = [
-    'AdaptiveTrendFollowing',
-    'PullbackContinuation',
-    'MeanReversion',
-    'VolatilityBreakout',
-    'LondonSessionMomentum',
-    'AdaptiveMomentumPullback'
+    'InstitutionalAIStrategy'
 ]
 
 # Share single instance of loader and feature engines across requests
@@ -44,9 +39,7 @@ def run_backtest():
     if isinstance(strategies_input, str):
         strategies_input = [strategies_input]
         
-    for s_name in strategies_input:
-        if s_name not in STRATEGIES:
-            return jsonify({'error': f"Strategy '{s_name}' is not recognized."}), 400
+    strategies_input = ['InstitutionalAIStrategy']
             
     try:
         combined_trades = []
@@ -55,35 +48,27 @@ def run_backtest():
         start_dt = pd.to_datetime(start_date)
         end_dt = pd.to_datetime(end_date)
         
-        # 1. Execute backtests for all selected strategies using the new 6-tier feature pipeline
+        # 1. Execute backtests for InstitutionalAIStrategy
         for s_name in strategies_input:
-            primary_timeframe = "15m" if s_name == "LondonSessionMomentum" else "1h"
+            from strategy_engine.institutional_ai import InstitutionalAIStrategy
+            import numpy as np
             
-            df_featured = feat_engine.generate_features(
-                loader=loader,
-                symbol=symbol,
-                start_date=start_date,
-                end_date=end_date,
-                primary_timeframe=primary_timeframe
-            )
+            strat = InstitutionalAIStrategy()
+            df_signals = strat.prepare_data(loader, symbol, start_date, end_date)
             
-            df_regimed = detector.detect_regimes(df_featured)
+            signals = np.full(len(df_signals), None, dtype=object)
+            if 'signal' in df_signals.columns:
+                signals = df_signals['signal'].values
+            else:
+                signals[df_signals['entry_signal'].values] = 'BUY'
             
-            eval_funcs = {
-                "AdaptiveTrendFollowing": sig_engine.evaluate_adaptive_trend,
-                "PullbackContinuation": sig_engine.evaluate_pullback_continuation,
-                "MeanReversion": sig_engine.evaluate_mean_reversion,
-                "VolatilityBreakout": sig_engine.evaluate_volatility_breakout,
-                "LondonSessionMomentum": sig_engine.evaluate_london_momentum,
-                "AdaptiveMomentumPullback": sig_engine.evaluate_adaptive_momentum_pullback
+            config = {
+                'sl_multiplier': strat.sl_atr_multiplier,
+                'tp_multiplier': None,
+                'trail_multiplier': strat.trail_atr_multiplier
             }
-            
-            signals, config = eval_funcs[s_name](df_regimed)
-            
-            # Filter out warmup data to target range
-            is_in_range = df_regimed.index >= start_dt
-            df_regimed_filtered = df_regimed[is_in_range]
-            signals_filtered = signals[is_in_range]
+            df_regimed_filtered = df_signals
+            signals_filtered = signals
             
             # Initialize ExecutionEngine with $10/pip per standard lot sizing and 1% capital risk sizing
             exec_engine = ExecutionEngine(initial_capital=initial_capital, default_pip_value=10.0)

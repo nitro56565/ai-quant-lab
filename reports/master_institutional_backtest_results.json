@@ -1,0 +1,91 @@
+{
+  "return_pct": 27.851788074758876,
+  "net_pnl": 2785.178807475888,
+  "trades": 801,
+  "win_rate": 43.82022471910113,
+  "pf": 1.1374505999468116,
+  "cagr": 3.120003039142971,
+  "ev_pips": 1.1892430086063226,
+  "ev_usd": 3.4771271004692377,
+  "rr_ratio": 1.5616086532743012,
+  "sharpe": 0.38196621944800935,
+  "sortino": 0.2631793077931742,
+  "calmar": 0.1839021446565327,
+  "mar_ratio": 0.1839021446565327,
+  "cvar_95": 0.24119550761743103,
+  "skewness": 3.1236113184365624,
+  "kurtosis": 48.69434203326944,
+  "psr": 1.0,
+  "dsr": 0.0,
+  "min_trl_days": 29,
+  "max_dd": 16.965560923555767,
+  "max_dd_duration_hours": 63745.0,
+  "score": -1.9781294461597487,
+  "yearly_metrics": {
+    "2018": {
+      "trades": 41,
+      "win_rate": 22.0,
+      "net_pnl": -807.5,
+      "return_pct": -8.07,
+      "pf": 0.43,
+      "max_dd": 7.97
+    },
+    "2019": {
+      "trades": 7,
+      "win_rate": 28.6,
+      "net_pnl": -27.41,
+      "return_pct": -0.3,
+      "pf": 0.83,
+      "max_dd": 1.53
+    },
+    "2020": {
+      "trades": 13,
+      "win_rate": 46.2,
+      "net_pnl": -20.51,
+      "return_pct": -0.22,
+      "pf": 0.92,
+      "max_dd": 1.73
+    },
+    "2021": {
+      "trades": 0,
+      "win_rate": 0.0,
+      "net_pnl": 0.0,
+      "return_pct": 0.0,
+      "pf": 1.0,
+      "max_dd": 0.0
+    },
+    "2022": {
+      "trades": 463,
+      "win_rate": 44.7,
+      "net_pnl": 2036.16,
+      "return_pct": 22.27,
+      "pf": 1.2,
+      "max_dd": 9.69
+    },
+    "2023": {
+      "trades": 149,
+      "win_rate": 43.0,
+      "net_pnl": 900.21,
+      "return_pct": 8.05,
+      "pf": 1.2,
+      "max_dd": 5.61
+    },
+    "2024": {
+      "trades": 11,
+      "win_rate": 45.5,
+      "net_pnl": 39.83,
+      "return_pct": 0.33,
+      "pf": 1.09,
+      "max_dd": 1.84
+    },
+    "2025": {
+      "trades": 117,
+      "win_rate": 49.6,
+      "net_pnl": 664.4,
+      "return_pct": 5.48,
+      "pf": 1.2,
+      "max_dd": 8.19
+    }
+  },
+  "sanity_warnings": []
+}

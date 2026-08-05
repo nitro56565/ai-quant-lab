@@ -1,0 +1,124 @@
+{
+  "sensitivity": [
+    {
+      "threshold": 28,
+      "trades": 76,
+      "win_rate": 36.84210526315789,
+      "pnl_pips": 80.62080511922578,
+      "pnl_usd": -47.711293182137965,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.3409903049468994
+    },
+    {
+      "threshold": 30,
+      "trades": 65,
+      "win_rate": 35.38461538461539,
+      "pnl_pips": 18.40320386661927,
+      "pnl_usd": -293.2362940018494,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.32622599601745605
+    },
+    {
+      "threshold": 32,
+      "trades": 58,
+      "win_rate": 37.93103448275862,
+      "pnl_pips": 242.20492924251982,
+      "pnl_usd": 800.6226687332826,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.31201720237731934
+    },
+    {
+      "threshold": 34,
+      "trades": 45,
+      "win_rate": 46.666666666666664,
+      "pnl_pips": 695.3566243470033,
+      "pnl_usd": 1968.9941300523797,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.32860612869262695
+    },
+    {
+      "threshold": 36,
+      "trades": 37,
+      "win_rate": 48.64864864864865,
+      "pnl_pips": 551.0134325441775,
+      "pnl_usd": 2112.9541491301043,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.32477593421936035
+    },
+    {
+      "threshold": 38,
+      "trades": 31,
+      "win_rate": 45.16129032258064,
+      "pnl_pips": 378.25065160099757,
+      "pnl_usd": 1302.0285162259743,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.32209300994873047
+    },
+    {
+      "threshold": 40,
+      "trades": 26,
+      "win_rate": 50.0,
+      "pnl_pips": 435.8650475150538,
+      "pnl_usd": 1592.6446763030754,
+      "profit_factor": 0.0,
+      "max_dd": 0.0,
+      "elapsed_s": 0.3187901973724365
+    }
+  ],
+  "cost_sensitivity": [
+    {
+      "name": "Baseline (0.0 pips extra)",
+      "extra_cost": 0.0,
+      "trades": 45,
+      "win_rate": 46.666666666666664,
+      "pnl_pips": 695.3566243470033,
+      "pnl_usd": 1968.9941300523797,
+      "profit_factor": 1.6725000819749685
+    },
+    {
+      "name": "+50% Cost (+0.5 pips/trade)",
+      "extra_cost": 0.5,
+      "trades": 45,
+      "win_rate": 44.44444444444444,
+      "pnl_pips": 672.8566243470033,
+      "pnl_usd": 1878.3941300523793,
+      "profit_factor": 1.6303733786344483
+    },
+    {
+      "name": "+100% Cost (+1.0 pips/trade)",
+      "extra_cost": 1.0,
+      "trades": 45,
+      "win_rate": 42.22222222222222,
+      "pnl_pips": 650.3566243470033,
+      "pnl_usd": 1787.7941300523808,
+      "profit_factor": 1.5889548229161026
+    },
+    {
+      "name": "+200% Extreme (+2.0 pips/trade)",
+      "extra_cost": 2.0,
+      "trades": 45,
+      "win_rate": 42.22222222222222,
+      "pnl_pips": 605.356624347003,
+      "pnl_usd": 1606.5941300523796,
+      "profit_factor": 1.5102344694978627
+    }
+  ],
+  "monte_carlo": {
+    "n_simulations": 5000,
+    "n_trades_per_sim": 45,
+    "final_equity_median": 11951.226500969542,
+    "final_equity_5th": 9649.516936726575,
+    "final_equity_95th": 14324.491221331778,
+    "max_dd_median": 7.135695401131128,
+    "max_dd_95th": 14.881300699664074,
+    "max_dd_99th": 20.162023459935703,
+    "profit_factor_median": 1.6753830084180916,
+    "prob_of_loss": 8.799999999999999
+  }
+}

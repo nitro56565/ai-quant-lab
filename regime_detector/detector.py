@@ -33,14 +33,16 @@ class RegimeDetector:
         
         # Read relevant feature arrays
         close = df_out['close'].values
-        ema50 = df_out['feat_trend_ema50'].values
-        ema200 = df_out['feat_trend_ema200'].values
+        # Compute EMAs on the fly to avoid depending on specific builder columns
+        ema50 = df_out['close'].ewm(span=50, adjust=False).mean().values
+        ema200 = df_out['close'].ewm(span=200, adjust=False).mean().values
         ema50_slope = df_out['feat_trend_ema50_slope'].values
         adx = df_out['feat_trend_adx'].values
         rsi = df_out['feat_osc_rsi'].values
-        dist_vwap = df_out['feat_price_dist_vwap'].values
+        # Map correctly to FeatureMatrixBuilder column names
+        dist_vwap = df_out['feat_struct_dist_vwap'].values if 'feat_struct_dist_vwap' in df_out.columns else np.zeros(len(df_out))
         atr_pct = df_out['feat_vol_atr_pct'].values
-        squeeze = df_out['feat_vol_squeeze'].values
+        squeeze = df_out['feat_vol_squeeze_ratio'].values if 'feat_vol_squeeze_ratio' in df_out.columns else np.ones(len(df_out))
         
         for i in range(len(df_out)):
             # 1. Check for extreme overextensions (Mean Reversion setup)

@@ -33,7 +33,7 @@ logger = logging.getLogger("AutoPipeline")
 # ⚙️ CONFIGURATION SETTINGS (Edit these to target different years/pairs)
 # =====================================================================
 SYMBOL = "EURUSD"                # Currency pair (e.g. "EURUSD", "GBPUSD")
-YEARS = [2022, 2023, 2024, 2025, 2026] # List of years to download and ingest
+YEARS = [2014, 2015, 2016, 2017] # List of years to download and ingest
 # =====================================================================
 
 

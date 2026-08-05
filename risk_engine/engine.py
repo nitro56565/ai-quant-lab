@@ -30,7 +30,8 @@ class RiskEngine:
 
     def calculate_order(self, direction: str, current_price: float, atr: float, pip_size: float, 
                         capital: float, sl_multiplier: float, tp_multiplier: float = None, 
-                        trail_multiplier: float = None, strategy_name: str = "Unknown") -> Order:
+                        trail_multiplier: float = None, strategy_name: str = "Unknown",
+                        risk_fraction: float = None) -> Order:
         """
         Creates a structured Order with calculated SL, TP, and dynamic lot sizing.
         """
@@ -45,14 +46,11 @@ class RiskEngine:
             tp_price = current_price - (atr * tp_multiplier) if tp_multiplier else None
             
         # Calculate Risk Sizing:
-        # Risk per trade = Capital * risk_fraction
-        # Risk per unit = sl_distance / pip_size
-        # Sizing units = Risk per trade / Risk per unit
-        risk_usd = capital * self.risk_fraction
+        use_risk_fraction = risk_fraction if risk_fraction is not None else self.risk_fraction
+        risk_usd = capital * use_risk_fraction
         sl_pips = sl_distance / pip_size if pip_size > 0 else 1.0
         
         # Sizing relative to standard pip value
-        # e.g., if we risk $100 and SL is 20 pips, size is 100 / (20 * 1) = 5 mini lots (size = 5.0)
         size = risk_usd / (sl_pips * self.default_pip_value) if sl_pips > 0 else 1.0
         size = max(0.1, round(size, 2))  # Bound size to sensible fractional lots
         

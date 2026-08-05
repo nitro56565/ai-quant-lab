@@ -63,6 +63,13 @@ class ExecutionEngine:
                 # Evaluate entries
                 sig = signals[i]
                 if sig in ('BUY', 'SELL'):
+                    # Check for dynamic target_risk_pct from strategy
+                    row_risk_frac = None
+                    if 'target_risk_pct' in df.columns:
+                        r_val = df['target_risk_pct'].values[i]
+                        if not np.isnan(r_val) and r_val > 0:
+                            row_risk_frac = r_val / 100.0
+
                     # Call Risk Engine to formulate Order
                     order = self.risk_engine.calculate_order(
                         direction=sig,
@@ -73,15 +80,37 @@ class ExecutionEngine:
                         sl_multiplier=sl_multiplier,
                         tp_multiplier=tp_multiplier,
                         trail_multiplier=trail_multiplier,
-                        strategy_name=strategy_name
+                        strategy_name=strategy_name,
+                        risk_fraction=row_risk_frac
                     )
                     
                     in_trade = True
                     direction = sig
                     entry_price = close
                     entry_time = timestamp
-                    sl_price = order.sl_price
-                    tp_price = order.tp_price
+                    
+                    if strategy_name in ('MLConsensusStrategy', 'InstitutionalAIStrategy'):
+                        if sig == 'BUY':
+                            pred_mfes = df['pred_mfe_long'].values if 'pred_mfe_long' in df.columns else np.zeros(len(df))
+                            pred_maes = df['pred_mae_long'].values if 'pred_mae_long' in df.columns else np.zeros(len(df))
+                            dynamic_tp_pips = max(pred_mfes[i], 5.0)
+                            dynamic_sl_pips = max(pred_maes[i], 5.0)
+                            min_sl_pips = (atr / pip_size) * 1.0
+                            dynamic_sl_pips = max(dynamic_sl_pips, min_sl_pips)
+                            sl_price = close - (dynamic_sl_pips * pip_size)
+                            tp_price = close + (dynamic_tp_pips * pip_size)
+                        else: # SELL
+                            pred_mfes = df['pred_mfe_short'].values if 'pred_mfe_short' in df.columns else np.zeros(len(df))
+                            pred_maes = df['pred_mae_short'].values if 'pred_mae_short' in df.columns else np.zeros(len(df))
+                            dynamic_tp_pips = max(pred_mfes[i], 5.0)
+                            dynamic_sl_pips = max(pred_maes[i], 5.0)
+                            min_sl_pips = (atr / pip_size) * 1.0
+                            dynamic_sl_pips = max(dynamic_sl_pips, min_sl_pips)
+                            sl_price = close + (dynamic_sl_pips * pip_size)
+                            tp_price = close - (dynamic_tp_pips * pip_size)
+                    else:
+                        sl_price = order.sl_price
+                        tp_price = order.tp_price
                     
                     highest_high = high
                     lowest_low = low
@@ -133,6 +162,10 @@ class ExecutionEngine:
                         stop_out = True
                         exit_price = min(close, swing_lows[i])
                         exit_reason = 'lower_low_break'
+                    elif strategy_name in ('MLConsensusStrategy', 'InstitutionalAIStrategy') and (timestamp - entry_time).total_seconds() / 3600.0 >= 12.0:
+                        stop_out = True
+                        exit_price = close
+                        exit_reason = 'time_limit'
                     elif low <= sl_price:
                         stop_out = True
                         exit_price = sl_price
@@ -154,6 +187,10 @@ class ExecutionEngine:
                         stop_out = True
                         exit_price = bb_mids[i]
                         exit_reason = 'take_profit'
+                    elif strategy_name in ('MLConsensusStrategy', 'InstitutionalAIStrategy') and (timestamp - entry_time).total_seconds() / 3600.0 >= 12.0:
+                        stop_out = True
+                        exit_price = close
+                        exit_reason = 'time_limit'
                     elif high >= sl_price:
                         stop_out = True
                         exit_price = sl_price
@@ -241,19 +278,43 @@ class ExecutionEngine:
         loss_cash = sum(t['pnl_usd'] for t in losses)
         profit_factor = win_cash / abs(loss_cash) if abs(loss_cash) > 0 else (win_cash if win_cash > 0 else 1.0)
         
-        # CAGR
+        # CAGR & MAR / Calmar
         start_dt = pd.to_datetime(start_date)
         end_dt = pd.to_datetime(end_date)
         total_days = (end_dt - start_dt).days
         years_duration = total_days / 365.25 if total_days > 0 else 1.0
         cagr = (((current_equity / self.initial_capital) ** (1.0 / years_duration)) - 1.0) * 100.0 if current_equity > 0 else -100.0
-        
-        # Sharpe Ratio (daily returns)
+        mar_ratio = cagr / max_dd_pct if max_dd_pct > 0 else cagr
+
+        # Expected Value per trade
+        ev_pips = pd.Series([t['pnl_pips'] for t in closed_trades]).mean()
+        ev_usd = pd.Series([t['pnl_usd'] for t in closed_trades]).mean()
+
+        # Avg Win Pips / Avg Loss Pips (R:R Ratio)
+        avg_win_pips = pd.Series([t['pnl_pips'] for t in wins]).mean() if wins else 0.0
+        avg_loss_pips = abs(pd.Series([t['pnl_pips'] for t in losses]).mean()) if losses else 1.0
+        rr_ratio = avg_win_pips / avg_loss_pips if avg_loss_pips > 0 else 0.0
+
+        # Drawdown Duration (hours underwater)
+        max_dd_duration_hours = 0
+        underwater_start = None
+        for pt in equity_curve:
+            eq = pt['equity']
+            if eq >= peak:
+                if underwater_start:
+                    dur = (pd.to_datetime(pt['time']) - pd.to_datetime(underwater_start)).total_seconds() / 3600.0
+                    max_dd_duration_hours = max(max_dd_duration_hours, dur)
+                    underwater_start = None
+            else:
+                if not underwater_start:
+                    underwater_start = pt['time']
+
+        # Daily Returns & Risk Ratios (Sortino, Calmar, CVaR 95%, Skewness, Kurtosis)
         daily_equity = {}
         curr_eq = self.initial_capital
         trades_by_day = {}
         for t in closed_trades:
-            day_str = t['exit_time'].strftime('%Y-%m-%d')
+            day_str = pd.to_datetime(t['exit_time']).strftime('%Y-%m-%d')
             trades_by_day.setdefault(day_str, []).append(t)
             
         curr_dt = start_dt
@@ -267,21 +328,121 @@ class ExecutionEngine:
             
         eq_series = pd.Series(daily_equity)
         pct_returns = eq_series.pct_change().dropna()
-        sharpe = (pct_returns.mean() / pct_returns.std() * (252 ** 0.5)) if not pct_returns.empty and pct_returns.std() > 0 else 0.0
         
+        sharpe = 0.0
+        sortino = 0.0
+        cvar_95 = 0.0
+        sk = 0.0
+        kt = 0.0
+        
+        if not pct_returns.empty and pct_returns.std() > 0:
+            std_ret = pct_returns.std()
+            sharpe = (pct_returns.mean() / std_ret * (252 ** 0.5))
+            
+            # Sortino Ratio (downside risk only)
+            downside_returns = pct_returns[pct_returns < 0]
+            downside_std = downside_returns.std() if not downside_returns.empty else std_ret
+            sortino = (pct_returns.mean() / downside_std * (252 ** 0.5)) if downside_std > 0 else sharpe
+            
+            # CVaR 95% (Expected Shortfall)
+            cvar_95 = abs(np.percentile(pct_returns, 5)) * 100.0
+            
+            from scipy.stats import skew, kurtosis
+            sk = float(skew(pct_returns))
+            kt = float(kurtosis(pct_returns, fisher=False))
+        
+        # Probabilistic Sharpe Ratio (PSR) & Deflated Sharpe Ratio (DSR)
+        psr = 0.5
+        dsr = 0.5
+        min_trl_days = 0
+        if not pct_returns.empty and len(pct_returns) > 5 and pct_returns.std() > 0:
+            from scipy.stats import norm
+            n_ret = len(pct_returns)
+            sr_annual = sharpe
+            sr_std = np.sqrt((1.0 - sk * sr_annual + ((kt - 1.0) / 4.0) * (sr_annual ** 2)) / max(n_ret - 1, 1))
+            if sr_std > 0:
+                psr = float(norm.cdf(sr_annual / sr_std))
+                expected_max_sr = 0.5 * (1.0 + np.sqrt(2.0 * np.log(10.0)))
+                dsr = float(norm.cdf((sr_annual - expected_max_sr) / sr_std))
+                # MinTRL in days for 95% PSR
+                min_trl_days = int(1.0 + (1.0 - sk * sr_annual + ((kt - 1.0) / 4.0) * (sr_annual ** 2)) * (norm.ppf(0.95) / max(sr_annual, 0.01)) ** 2)
+
+        # Yearly YoY Breakdown Matrix (2018 - 2025)
+        df_trades = pd.DataFrame(closed_trades)
+        df_trades['year'] = pd.to_datetime(df_trades['exit_time']).dt.year
+        yearly_metrics = {}
+        curr_cap = self.initial_capital
+
+        for yr in range(2018, 2026):
+            yr_trades = df_trades[df_trades['year'] == yr]
+            n_tr = len(yr_trades)
+
+            if n_tr == 0:
+                yearly_metrics[yr] = {
+                    'trades': 0,
+                    'win_rate': 0.0,
+                    'net_pnl': 0.0,
+                    'return_pct': 0.0,
+                    'pf': 1.0,
+                    'max_dd': 0.0
+                }
+                continue
+
+            wins_yr = yr_trades[yr_trades['pnl_pips'] > 0]
+            losses_yr = yr_trades[yr_trades['pnl_pips'] <= 0]
+            win_rate_yr = (len(wins_yr) / n_tr) * 100.0
+            net_pnl_yr = yr_trades['pnl_usd'].sum()
+            ret_pct_yr = (net_pnl_yr / curr_cap) * 100.0
+
+            win_cash_yr = wins_yr['pnl_usd'].sum() if len(wins_yr) > 0 else 0.0
+            loss_cash_yr = abs(losses_yr['pnl_usd'].sum()) if len(losses_yr) > 0 else 0.0
+            pf_yr = win_cash_yr / loss_cash_yr if loss_cash_yr > 0 else 1.0
+
+            # Annual Max Drawdown
+            eq_yr = curr_cap + yr_trades['pnl_usd'].cumsum()
+            pk_yr = eq_yr.cummax()
+            dd_yr = ((pk_yr - eq_yr) / pk_yr) * 100.0
+            max_dd_yr = dd_yr.max() if len(dd_yr) > 0 else 0.0
+
+            curr_cap += net_pnl_yr
+
+            yearly_metrics[yr] = {
+                'trades': n_tr,
+                'win_rate': round(win_rate_yr, 1),
+                'net_pnl': round(net_pnl_yr, 2),
+                'return_pct': round(ret_pct_yr, 2),
+                'pf': round(pf_yr, 2),
+                'max_dd': round(max_dd_yr, 2)
+            }
+
         score = 0.35 * cagr + 0.25 * sharpe + 0.20 * profit_factor - 0.20 * max_dd_pct
         
         metrics = {
             'return_pct': ((current_equity - self.initial_capital) / self.initial_capital) * 100.0,
+            'net_pnl': current_equity - self.initial_capital,
             'trades': total_trades,
             'win_rate': win_rate,
             'pf': profit_factor,
+            'cagr': cagr,
+            'ev_pips': ev_pips,
+            'ev_usd': ev_usd,
+            'rr_ratio': rr_ratio,
             'sharpe': sharpe,
+            'sortino': sortino,
+            'calmar': mar_ratio,
+            'mar_ratio': mar_ratio,
+            'cvar_95': cvar_95,
+            'skewness': sk,
+            'kurtosis': kt,
+            'psr': psr,
+            'dsr': dsr,
+            'min_trl_days': min_trl_days,
             'max_dd': max_dd_pct,
-            'score': score
+            'max_dd_duration_hours': max_dd_duration_hours,
+            'score': score,
+            'yearly_metrics': yearly_metrics
         }
         
-        # Add automated sanity checks
         metrics['sanity_warnings'] = self.run_sanity_checks(closed_trades, metrics)
         
         return metrics

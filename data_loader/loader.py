@@ -342,7 +342,7 @@ class DataLoader:
                         if self._is_weekend_gap(gap_start, gap_end):
                             continue
                             
-                    logger.warning(f"Unexpected data gap found between {gap_start} and {gap_end} (duration: {gap})")
+                    logger.debug(f"Unexpected data gap found between {gap_start} and {gap_end} (duration: {gap})")
 
     def _is_weekend_gap(self, start, end):
         """
