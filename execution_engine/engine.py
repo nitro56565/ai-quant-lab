@@ -362,8 +362,10 @@ class ExecutionEngine:
             sr_std = np.sqrt((1.0 - sk * sr_annual + ((kt - 1.0) / 4.0) * (sr_annual ** 2)) / max(n_ret - 1, 1))
             if sr_std > 0:
                 psr = float(norm.cdf(sr_annual / sr_std))
-                expected_max_sr = 0.5 * (1.0 + np.sqrt(2.0 * np.log(10.0)))
-                dsr = float(norm.cdf((sr_annual - expected_max_sr) / sr_std))
+                n_trials = 8
+                gamma = 0.5772156649
+                exp_max_sr = ((1.0 - gamma) * norm.ppf(1.0 - 1.0 / n_trials) + gamma * norm.ppf(1.0 - 1.0 / (n_trials * np.e))) * 0.15
+                dsr = float(norm.cdf((sr_annual - exp_max_sr) / max(sr_std, 0.10))) if sr_annual > 0 else 0.0
                 # MinTRL in days for 95% PSR
                 min_trl_days = int(1.0 + (1.0 - sk * sr_annual + ((kt - 1.0) / 4.0) * (sr_annual ** 2)) * (norm.ppf(0.95) / max(sr_annual, 0.01)) ** 2)
 

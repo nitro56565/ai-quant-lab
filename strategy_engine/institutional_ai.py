@@ -228,6 +228,7 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
         df_out['pred_ev_short'] = pred_ev_short
 
         df_out['prob_bull_trend'] = prob_bull_trend
+        df_out['feat_hmm_regime'] = self.meta_regime.hmm_detector.predict(df_out)
         df_out['conformal_conf'] = conf_scores
         df_out['target_risk_pct'] = target_risk_pcts
         df_out['ev_threshold'] = ev_thresholds
