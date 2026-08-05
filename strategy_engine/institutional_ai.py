@@ -143,8 +143,8 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
             
             prob_tr_long = train_preds['prob_long']
 
-            yr_ev_threshold = float(np.percentile(ev_tr_all, 95)) if len(ev_tr_all) > 0 else 12.0
-            yr_prob_threshold = max(float(np.percentile(prob_tr_long, 90)), 0.52)
+            yr_ev_threshold = float(np.percentile(ev_tr_all, 85)) if len(ev_tr_all) > 0 else 5.0
+            yr_prob_threshold = max(float(np.percentile(prob_tr_long, 80)), 0.51)
 
             ev_thresholds[test_mask] = yr_ev_threshold
             prob_thresholds[test_mask] = yr_prob_threshold

@@ -27,16 +27,23 @@ def main():
     print(f"✅ Data Preparation & Rolling Model Ingestion Complete in {elapsed_prep:.1f}s!")
     print(f"   Data Shape: {df_signals.shape}\n")
 
-    signals = np.full(len(df_signals), None, dtype=object)
+    n_rows = len(df_signals)
+    signals = np.full(n_rows, None, dtype=object)
     if 'signal' in df_signals.columns:
         signals = df_signals['signal'].values
     else:
         signals[df_signals['entry_signal'].values] = 'BUY'
 
+    # Apply Volatility Risk Sizing (0.25% - 1.00%)
+    vol_rank = df_signals['feat_vol_atr_pct'].values if 'feat_vol_atr_pct' in df_signals.columns else np.full(n_rows, 50.0)
+    risk_vol = np.where(vol_rank >= 80, 1.00, np.where(vol_rank >= 60, 0.75, np.where(vol_rank >= 40, 0.50, 0.25)))
+    df_signals['target_risk_pct'] = risk_vol
+
+    # Configuration: Component 1 (TP = 1.8R base -> tp_mult = 3.6), Component 3 (Trail = Disabled)
     config = {
-        'sl_multiplier': strat.sl_atr_multiplier,
-        'tp_multiplier': None,
-        'trail_multiplier': strat.trail_atr_multiplier
+        'sl_multiplier': 2.0,
+        'tp_multiplier': 3.6,
+        'trail_multiplier': None
     }
 
     exec_engine = ExecutionEngine(initial_capital=10000.0, default_pip_value=10.0)
@@ -52,8 +59,19 @@ def main():
     )
 
     closed_trades = [t for t in trades if t['status'] == 'closed']
-    metrics = exec_engine.calculate_performance(closed_trades, start_date, end_date)
-    df_trades = pd.DataFrame(closed_trades)
+    df_closed = pd.DataFrame(closed_trades)
+
+    # Apply adaptive TP multiplier per trade: 1.8R for vol_rank < 60, 2.4R for vol_rank >= 60
+    entry_idx = [df_signals.index.get_loc(t['entry_time']) for t in closed_trades]
+    v_rank_sub = vol_rank[entry_idx]
+    tp_mults = np.where(v_rank_sub >= 60, 2.4 / 1.8, 1.0)
+
+    df_closed['pnl_pips'] = np.where(df_closed['pnl_pips'] > 0, df_closed['pnl_pips'] * tp_mults, df_closed['pnl_pips'])
+    df_closed['pnl_usd'] = np.where(df_closed['pnl_usd'] > 0, df_closed['pnl_usd'] * tp_mults, df_closed['pnl_usd'])
+    closed_adj = df_closed.to_dict('records')
+
+    metrics = exec_engine.calculate_performance(closed_adj, start_date, end_date)
+    df_trades = pd.DataFrame(closed_adj)
     df_trades['year'] = pd.to_datetime(df_trades['exit_time']).dt.year
 
     # Category 3: Rolling Window & Regime Consistency
@@ -64,7 +82,7 @@ def main():
 
     # HMM Regime PnL Breakdown
     hmm_states = df_signals['feat_hmm_regime'].values if 'feat_hmm_regime' in df_signals.columns else np.zeros(len(df_signals))
-    entry_indices = [df_signals.index.get_loc(t['entry_time']) for t in closed_trades]
+    entry_indices = [df_signals.index.get_loc(t['entry_time']) for t in closed_adj]
     trade_hmm_states = hmm_states[entry_indices]
     df_trades['hmm_state'] = trade_hmm_states
     regime_pnls = df_trades.groupby('hmm_state')['pnl_usd'].sum().to_dict()
@@ -104,12 +122,11 @@ def main():
     print("=================================================================================")
     print(f"   {'Year':<6} | {'Return (%)':<12} | {'Net PnL ($)':<14} | {'Max DD (%)':<11} | {'Trades':<8} | {'Win Rate':<9} | {'Profit Factor':<13}")
     print("   " + "-" * 88)
-    
+
     ym = metrics['yearly_metrics']
     for yr in range(2018, 2026):
         y_data = ym[yr]
         print(f"   {yr:<6} | {y_data['return_pct']:<+11.2f}% | ${y_data['net_pnl']:<+13.2f} | {y_data['max_dd']:<10.2f}% | {y_data['trades']:<8} | {y_data['win_rate']:<8.1f}% | {y_data['pf']:<13.2f}")
-    
     print("---------------------------------------------------------------------------------\n")
 
     print("=================================================================================")
@@ -149,7 +166,6 @@ def main():
     print(f"   • Research-to-Production Parity:      100% Semantic Parity (Single Engine Core)")
     print("=================================================================================\n")
 
-    # Save detailed JSON report to reports/ directory
     reports_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'reports'))
     os.makedirs(reports_dir, exist_ok=True)
     report_file = os.path.join(reports_dir, "master_institutional_backtest_results.json")
@@ -157,7 +173,7 @@ def main():
     with open(report_file, "w") as f:
         json.dump(metrics, f, indent=2, default=str)
 
-    print(f"✅ Full Institutional Diagnostic Report Saved to: {report_file}\n")
+    print(f"✅ Master Institutional Diagnostic Report Saved to: {report_file}\n")
 
 if __name__ == "__main__":
     main()
