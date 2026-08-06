@@ -67,8 +67,9 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
 
         labeler = FutureLabeler(horizon=12, quality_threshold_atr=2.0)
         df_labeled = labeler.label(df_feat)
-        df_labeled['label_dir_long'] = (df_labeled['label_return_12h'] > 5.0).astype(int)
-        df_labeled['label_dir_short'] = (df_labeled['label_return_12h'] < -5.0).astype(int)
+        df_labeled['label_dir_long'] = np.where(df_labeled['label_tb_target_long'] == 1, 1, 0)
+        df_labeled['label_dir_short'] = np.where(df_labeled['label_tb_target_short'] == 1, 1, 0)
+
 
         feat_cols = [c for c in df_labeled.columns if c.startswith('feat_')]
 
@@ -95,6 +96,8 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
         target_risk_pcts = np.ones(n_rows)
         ev_thresholds = np.zeros(n_rows)
         prob_thresholds = np.zeros(n_rows)
+        prob_thresholds_short = np.zeros(n_rows)
+
 
         dates = df_labeled.index
         years = dates.year
@@ -142,12 +145,16 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
             ev_tr_all = np.concatenate([ev_tr_long[ev_tr_long > 0], ev_tr_short[ev_tr_short > 0]])
             
             prob_tr_long = train_preds['prob_long']
+            prob_tr_short = train_preds['prob_short']
 
-            yr_ev_threshold = float(np.percentile(ev_tr_all, 85)) if len(ev_tr_all) > 0 else 5.0
-            yr_prob_threshold = max(float(np.percentile(prob_tr_long, 80)), 0.51)
+            yr_ev_threshold = float(np.percentile(ev_tr_all, 75)) if len(ev_tr_all) > 0 else 3.5
+            yr_prob_threshold_long = max(float(np.percentile(prob_tr_long, 75)), 0.32)
+            yr_prob_threshold_short = max(float(np.percentile(prob_tr_short, 75)), 0.30)
+
 
             ev_thresholds[test_mask] = yr_ev_threshold
-            prob_thresholds[test_mask] = yr_prob_threshold
+            prob_thresholds[test_mask] = yr_prob_threshold_long
+            prob_thresholds_short[test_mask] = yr_prob_threshold_short
 
             # 5. Out-of-Sample Ensemble Predictions
             ens_preds = self.ensemble.predict(X_test)
@@ -233,6 +240,7 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
         df_out['target_risk_pct'] = target_risk_pcts
         df_out['ev_threshold'] = ev_thresholds
         df_out['prob_threshold'] = prob_thresholds
+        df_out['prob_threshold_short'] = prob_thresholds_short
 
         # Generate signals
         df_signals = self.generate_signals(df_out)
@@ -251,17 +259,25 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
         
         df['signal'] = None
         
-        prob_thresh = df['prob_threshold'] if 'prob_threshold' in df.columns else 0.55
-        ev_thresh = df['ev_threshold'] if 'ev_threshold' in df.columns else 12.0
+        prob_thresh_long = df['prob_threshold'] if 'prob_threshold' in df.columns else 0.35
+        prob_thresh_short = df['prob_threshold_short'] if 'prob_threshold_short' in df.columns else 0.34
+        ev_thresh = df['ev_threshold'] if 'ev_threshold' in df.columns else 6.0
+
         
         cost_drag_pips = 1.5
         net_ev_long = (df['pred_prob_long'] * df['pred_mfe_long']) - ((1.0 - df['pred_prob_long']) * df['pred_mae_long']) - cost_drag_pips
         net_ev_short = (df['pred_prob_short'] * df['pred_mfe_short']) - ((1.0 - df['pred_prob_short']) * df['pred_mae_short']) - cost_drag_pips
 
-        # Long entry: EV >= Top rolling EV AND Probability >= Top rolling confidence AND Net EV > 0
-        long_ok = (df['pred_ev_long'] >= ev_thresh) & (df['pred_prob_long'] >= prob_thresh) & (net_ev_long > 0) & df['session_ok']
-        # Short entry: EV >= Top rolling EV AND Probability >= Top rolling confidence AND Net EV > 0
-        short_ok = (df['pred_ev_short'] >= ev_thresh) & (df['pred_prob_short'] >= prob_thresh) & (net_ev_short > 0) & df['session_ok']
+        # Long entry: EV >= Top rolling EV AND Probability >= Long rolling threshold AND Net EV > 0
+        long_ok = (df['pred_ev_long'] >= ev_thresh) & (df['pred_prob_long'] >= prob_thresh_long) & (net_ev_long > 0) & df['session_ok']
+        # Short entry: EV >= 6.0 AND Probability >= Short rolling threshold AND Net EV > 0
+        short_ok = (df['pred_ev_short'] >= 6.0) & (df['pred_prob_short'] >= prob_thresh_short) & (net_ev_short > 0) & df['session_ok']
+
+        # Targeted Bear Regime Filter: In State 0 (Strong Bearish Trend, drift -1.83 pips/hr),
+        # block BUY entries unless ML long probability is exceptionally high (>= 0.60).
+        if 'feat_hmm_regime' in df.columns:
+            bear_regime_filter = ~((df['feat_hmm_regime'] == 0) & (df['pred_prob_long'] < 0.60))
+            long_ok = long_ok & bear_regime_filter
         
         long_trigger = long_ok & (~short_ok | (df['pred_ev_long'] >= df['pred_ev_short']))
         short_trigger = short_ok & (~long_ok | (df['pred_ev_short'] > df['pred_ev_long']))
@@ -271,3 +287,5 @@ class InstitutionalAIStrategy(MLConsensusStrategy):
         df['entry_signal'] = df['signal'].notna()
         
         return df
+
+

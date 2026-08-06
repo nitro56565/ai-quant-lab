@@ -1,0 +1,148 @@
+{
+  "classification_task": [
+    {
+      "id": "L02",
+      "name": "Triple Barrier 2.5/1.5/24h",
+      "status": "Production",
+      "trades": 1790,
+      "return_pct": 107.28,
+      "pf": 1.27,
+      "sharpe": 1.08,
+      "max_dd": 6.69,
+      "ev_usd": 5.99,
+      "ece": 0.0769,
+      "brier": 0.2369,
+      "runtime_sec": 66.52,
+      "gates": {
+        "gate_1_system_improvement": true,
+        "gate_2_deflated_sharpe": true,
+        "gate_3_walk_forward_stability": true,
+        "gate_4_profit_concentration": false,
+        "gate_5_confidence_monotonicity": true,
+        "gate_6_execution_friction": true,
+        "certified_production_candidate": false
+      },
+      "certified_candidate": false
+    },
+    {
+      "id": "L04",
+      "name": "Volatility-Normalized Barrier",
+      "status": "Research",
+      "trades": 1790,
+      "return_pct": 107.28,
+      "pf": 1.27,
+      "sharpe": 1.08,
+      "max_dd": 6.69,
+      "ev_usd": 5.99,
+      "ece": 0.0769,
+      "brier": 0.2369,
+      "runtime_sec": 67.55,
+      "gates": {
+        "gate_1_system_improvement": true,
+        "gate_2_deflated_sharpe": true,
+        "gate_3_walk_forward_stability": true,
+        "gate_4_profit_concentration": false,
+        "gate_5_confidence_monotonicity": true,
+        "gate_6_execution_friction": true,
+        "certified_production_candidate": false
+      },
+      "certified_candidate": false
+    },
+    {
+      "id": "L06",
+      "name": "Regime-Aware Labels",
+      "status": "Experimental",
+      "trades": 1790,
+      "return_pct": 107.28,
+      "pf": 1.27,
+      "sharpe": 1.08,
+      "max_dd": 6.69,
+      "ev_usd": 5.99,
+      "ece": 0.0769,
+      "brier": 0.2369,
+      "runtime_sec": 65.88,
+      "gates": {
+        "gate_1_system_improvement": true,
+        "gate_2_deflated_sharpe": true,
+        "gate_3_walk_forward_stability": true,
+        "gate_4_profit_concentration": false,
+        "gate_5_confidence_monotonicity": true,
+        "gate_6_execution_friction": true,
+        "certified_production_candidate": false
+      },
+      "certified_candidate": false
+    },
+    {
+      "id": "L01",
+      "name": "Fixed Horizon 12h",
+      "status": "Baseline",
+      "trades": 1918,
+      "return_pct": 73.85,
+      "pf": 1.17,
+      "sharpe": 0.8,
+      "max_dd": 11.16,
+      "ev_usd": 3.85,
+      "ece": 0.0911,
+      "brier": 0.2705,
+      "runtime_sec": 67.0,
+      "gates": {
+        "gate_1_system_improvement": false,
+        "gate_2_deflated_sharpe": true,
+        "gate_3_walk_forward_stability": true,
+        "gate_4_profit_concentration": false,
+        "gate_5_confidence_monotonicity": true,
+        "gate_6_execution_friction": true,
+        "certified_production_candidate": false
+      },
+      "certified_candidate": false
+    },
+    {
+      "id": "L05",
+      "name": "Quantile Return (5-Class)",
+      "status": "Research",
+      "trades": 823,
+      "return_pct": 41.03,
+      "pf": 1.28,
+      "sharpe": 0.73,
+      "max_dd": 5.83,
+      "ev_usd": 4.99,
+      "ece": 0.0714,
+      "brier": 0.199,
+      "runtime_sec": 69.57,
+      "gates": {
+        "gate_1_system_improvement": true,
+        "gate_2_deflated_sharpe": true,
+        "gate_3_walk_forward_stability": false,
+        "gate_4_profit_concentration": false,
+        "gate_5_confidence_monotonicity": true,
+        "gate_6_execution_friction": true,
+        "certified_production_candidate": false
+      },
+      "certified_candidate": false
+    },
+    {
+      "id": "L03",
+      "name": "Dynamic ATR Barrier",
+      "status": "Research",
+      "trades": 746,
+      "return_pct": 34.48,
+      "pf": 1.23,
+      "sharpe": 0.64,
+      "max_dd": 7.54,
+      "ev_usd": 4.62,
+      "ece": 0.0586,
+      "brier": 0.2078,
+      "runtime_sec": 66.87,
+      "gates": {
+        "gate_1_system_improvement": true,
+        "gate_2_deflated_sharpe": true,
+        "gate_3_walk_forward_stability": false,
+        "gate_4_profit_concentration": false,
+        "gate_5_confidence_monotonicity": true,
+        "gate_6_execution_friction": true,
+        "certified_production_candidate": false
+      },
+      "certified_candidate": false
+    }
+  ]
+}

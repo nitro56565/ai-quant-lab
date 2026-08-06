@@ -1,0 +1,68 @@
+{
+  "track1_entry_labels": {
+    "question": "Which label produces the highest-quality entry probabilities?",
+    "candidates": [
+      {
+        "name": "\u2b50 Quantile Return Label (5-Class)",
+        "status": "Experimental",
+        "trades": 4616,
+        "return_pct": 261.14,
+        "pf": 1.27,
+        "sharpe": 1.61,
+        "max_dd": 8.94,
+        "ev_usd": 5.66,
+        "runtime_sec": 68.11,
+        "s_robust": 1.1804
+      },
+      {
+        "name": "Triple Barrier 2.5/1.5/24h",
+        "status": "Production",
+        "trades": 1790,
+        "return_pct": 107.28,
+        "pf": 1.27,
+        "sharpe": 1.08,
+        "max_dd": 6.69,
+        "ev_usd": 5.99,
+        "runtime_sec": 66.81,
+        "s_robust": 1.0773
+      },
+      {
+        "name": "Volatility-Normalized Barrier",
+        "status": "Research",
+        "trades": 1790,
+        "return_pct": 107.28,
+        "pf": 1.27,
+        "sharpe": 1.08,
+        "max_dd": 6.69,
+        "ev_usd": 5.99,
+        "runtime_sec": 65.44,
+        "s_robust": 1.0773
+      },
+      {
+        "name": "Fixed Horizon 12h",
+        "status": "Baseline",
+        "trades": 1918,
+        "return_pct": 73.85,
+        "pf": 1.17,
+        "sharpe": 0.8,
+        "max_dd": 11.16,
+        "ev_usd": 3.85,
+        "runtime_sec": 66.57,
+        "s_robust": 0.9847
+      },
+      {
+        "name": "Dynamic ATR Barrier",
+        "status": "Research",
+        "trades": 746,
+        "return_pct": 34.48,
+        "pf": 1.23,
+        "sharpe": 0.64,
+        "max_dd": 7.54,
+        "ev_usd": 4.62,
+        "runtime_sec": 67.38,
+        "s_robust": 0.9758
+      }
+    ],
+    "certified_winner": "\u2b50 Quantile Return Label (5-Class)"
+  }
+}

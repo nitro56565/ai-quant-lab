@@ -74,8 +74,8 @@
     "cb_iterations": 100
   },
   "metrics": {
-    "ece": 0.1022090801108559,
+    "ece": 0.10082716511693338,
     "drift": "SEVERE_DRIFT"
   },
-  "git_commit": "1ba721b2828ffe296e09acfe0d3c0be92b1a42d2"
+  "git_commit": "b2a5c67c93d5ad375b6c56546320c22668ccff72"
 }

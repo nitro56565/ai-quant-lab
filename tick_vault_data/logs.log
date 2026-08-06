@@ -1,0 +1,220 @@
+2026-08-06 00:24:26 - tick_vault - INFO - read_tick_data:98 - Reading tick data for EURUSD
+2026-08-06 00:24:26 - tick_vault - DEBUG - __init__:50 - Initialized metadata database at tick_vault_data/metadata.db
+2026-08-06 00:24:26 - tick_vault - DEBUG - _ensure_table_exists:75 - Ensuring table exists for symbol: EURUSD
+2026-08-06 00:24:26 - tick_vault - DEBUG - first_chunk:226 - No data found for symbol: EURUSD
+2026-08-06 00:24:26 - tick_vault - DEBUG - _ensure_table_exists:75 - Ensuring table exists for symbol: EURUSD
+2026-08-06 00:24:26 - tick_vault - DEBUG - last_chunk:264 - No data found for symbol: EURUSD
+2026-08-06 00:24:26 - tick_vault - ERROR - read_tick_data:116 - No data found for symbol EURUSD
+2026-08-06 00:24:26 - tick_vault - DEBUG - close:430 - Closed metadata database connection
+2026-08-06 00:24:39 - tick_vault - INFO - read_tick_data:98 - Reading tick data for EURUSD
+2026-08-06 00:24:39 - tick_vault - DEBUG - __init__:50 - Initialized metadata database at tick_vault_data/metadata.db
+2026-08-06 00:24:39 - tick_vault - DEBUG - _ensure_table_exists:75 - Ensuring table exists for symbol: EURUSD
+2026-08-06 00:24:39 - tick_vault - DEBUG - first_chunk:226 - No data found for symbol: EURUSD
+2026-08-06 00:24:39 - tick_vault - DEBUG - _ensure_table_exists:75 - Ensuring table exists for symbol: EURUSD
+2026-08-06 00:24:39 - tick_vault - DEBUG - last_chunk:264 - No data found for symbol: EURUSD
+2026-08-06 00:24:39 - tick_vault - ERROR - read_tick_data:116 - No data found for symbol EURUSD
+2026-08-06 00:24:39 - tick_vault - DEBUG - close:430 - Closed metadata database connection
+2026-08-06 00:24:50 - tick_vault - INFO - download_range:48 - Starting download for EURUSD from 2021-01-04 to 2021-01-04
+2026-08-06 00:24:50 - tick_vault - DEBUG - __init__:50 - Initialized metadata database at tick_vault_data/metadata.db
+2026-08-06 00:24:50 - tick_vault - DEBUG - _ensure_table_exists:75 - Ensuring table exists for symbol: EURUSD
+2026-08-06 00:24:50 - tick_vault - DEBUG - find_not_attempted_chunks:189 - Found 12 not-attempted chunks for EURUSD from 2021-01-04 to 2021-01-04
+2026-08-06 00:24:50 - tick_vault - DEBUG - close:430 - Closed metadata database connection
+2026-08-06 00:24:50 - tick_vault - INFO - download_range:68 - Found 12 chunks to download for EURUSD
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_range:78 - Using 10 workers across 1 proxies
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_range:87 - Starting download workers and metadata worker
+2026-08-06 00:24:50 - tick_vault - DEBUG - metadata_worker:42 - Metadata worker started
+2026-08-06 00:24:50 - tick_vault - DEBUG - __init__:50 - Initialized metadata database at tick_vault_data/metadata.db
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/00h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/01h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/02h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/03h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/04h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/05h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/06h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/07h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/08h_ticks.bi5
+2026-08-06 00:24:50 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:24:50 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/09h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/00h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/01h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/02h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/03h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/04h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/05h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/06h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/07h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/08h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:24:55 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/09h_ticks.bi5
+2026-08-06 00:24:55 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/03h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/06h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/04h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/02h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/08h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/07h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/01h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/09h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/05h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/00h_ticks.bi5
+2026-08-06 00:25:03 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/03h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/06h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/04h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/02h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/08h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/07h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/01h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/09h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/05h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:10 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/00h_ticks.bi5
+2026-08-06 00:25:10 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/03h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/06h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/04h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/02h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/08h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/07h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/01h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/09h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/05h_ticks.bi5
+2026-08-06 00:25:19 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/04/00h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - INFO - download_range:48 - Starting download for EURUSD from 2021-01-01 to 2021-12-31
+2026-08-06 00:25:32 - tick_vault - DEBUG - __init__:50 - Initialized metadata database at tick_vault_data/metadata.db
+2026-08-06 00:25:32 - tick_vault - DEBUG - _ensure_table_exists:75 - Ensuring table exists for symbol: EURUSD
+2026-08-06 00:25:32 - tick_vault - DEBUG - find_not_attempted_chunks:189 - Found 8759 not-attempted chunks for EURUSD from 2021-01-01 to 2021-12-31
+2026-08-06 00:25:32 - tick_vault - DEBUG - close:430 - Closed metadata database connection
+2026-08-06 00:25:32 - tick_vault - INFO - download_range:68 - Found 8759 chunks to download for EURUSD
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_range:78 - Using 10 workers across 1 proxies
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_range:87 - Starting download workers and metadata worker
+2026-08-06 00:25:32 - tick_vault - DEBUG - metadata_worker:42 - Metadata worker started
+2026-08-06 00:25:32 - tick_vault - DEBUG - __init__:50 - Initialized metadata database at tick_vault_data/metadata.db
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/00h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/01h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/02h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/03h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/04h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/05h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/06h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/07h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/08h_ticks.bi5
+2026-08-06 00:25:32 - tick_vault - DEBUG - download_worker:49 - Download worker started with proxy: None
+2026-08-06 00:25:32 - tick_vault - DEBUG - fetch_with_retry:196 - Fetching URL: https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/09h_ticks.bi5
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/04h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/03h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/06h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/05h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/01h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/00h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/07h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/09h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:36 - tick_vault - WARNING - _fetch:143 - Network error for https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/08h_ticks.bi5: ConnectError
+2026-08-06 00:25:36 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:37 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/02h_ticks.bi5
+2026-08-06 00:25:37 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 1.0s (attempt 1/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/04h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/03h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/06h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/05h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/01h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/00h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/07h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/09h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:42 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/08h_ticks.bi5
+2026-08-06 00:25:42 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:43 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/02h_ticks.bi5
+2026-08-06 00:25:43 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 2.0s (attempt 2/4)
+2026-08-06 00:25:50 - tick_vault - WARNING - metadata_worker:94 - Metadata worker timeout - assuming parent crashed
+2026-08-06 00:25:50 - tick_vault - DEBUG - close:430 - Closed metadata database connection
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/07h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/00h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/05h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/08h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/03h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/04h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/09h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/01h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:52 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/06h_ticks.bi5
+2026-08-06 00:25:52 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:25:54 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/02h_ticks.bi5
+2026-08-06 00:25:54 - tick_vault - INFO - fetch_with_retry:228 - Retryable error, backing off 4.0s (attempt 3/4)
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/07h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/00h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/05h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/08h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/03h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/04h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/09h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/01h_ticks.bi5
+2026-08-06 00:26:01 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/06h_ticks.bi5
+2026-08-06 00:26:03 - tick_vault - WARNING - _fetch:138 - Timeout while fetching https://datafeed.dukascopy.com/datafeed/EURUSD/2021/00/01/02h_ticks.bi5
+2026-08-06 00:26:32 - tick_vault - WARNING - metadata_worker:94 - Metadata worker timeout - assuming parent crashed
+2026-08-06 00:26:32 - tick_vault - DEBUG - close:430 - Closed metadata database connection

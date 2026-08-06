@@ -16,7 +16,21 @@ class ExecutionEngine:
         self.risk_fraction = risk_fraction
         self.risk_engine = RiskEngine(risk_fraction=risk_fraction, default_pip_value=default_pip_value)
 
-    def run_simulation(self, df: pd.DataFrame, signals, config: dict, symbol: str, pip_size: float, strategy_name: str) -> list:
+    def run_simulation(
+        self,
+        df: pd.DataFrame,
+        signals: np.ndarray,
+        config: Dict[str, Any],
+        symbol: str = "EURUSD",
+        pip_size: float = 0.0001,
+        strategy_name: str = "BaseStrategy",
+        limit_retrace_atr_mult: float = 0.25,
+        latency_ms: int = 300,
+        asymmetric_slippage_pips: float = 0.30,
+        last_look_rejection_rate: float = 0.035,
+        commission_per_lot_usd: float = 7.00
+    ) -> List[Dict[str, Any]]:
+
         """
         Runs bar-by-bar execution matching for signals and returns a list of trade dictionaries.
         """
@@ -84,10 +98,30 @@ class ExecutionEngine:
                         risk_fraction=row_risk_frac
                     )
                     
+                    # 1. LP Last-Look Rejection Check (3.5% toxicity rejection)
+                    if last_look_rejection_rate > 0 and np.random.random() < last_look_rejection_rate:
+                        continue # Order rejected by LP Last-Look protocol
+
                     in_trade = True
                     direction = sig
-                    entry_price = close
+                    retrace_pips = (atr / pip_size) * limit_retrace_atr_mult
+                    base_entry = close - (retrace_pips * pip_size) if sig == 'BUY' else close + (retrace_pips * pip_size)
+
+                    # 2. Latency Repricing (100-500ms transmission delay penalty)
+                    latency_drag_pips = (latency_ms / 1000.0) * 0.50 # ~0.15 pips per 300ms
+
+                    # 3. Asymmetric Slippage Penalty (volatility-scaled adverse drag)
+                    vol_scale = min(2.0, max(0.5, atr / (df['feat_vol_atr'].mean() if 'feat_vol_atr' in df.columns else atr)))
+                    total_adverse_drag_pips = (asymmetric_slippage_pips * vol_scale) + latency_drag_pips
+
+                    if sig == 'BUY':
+                        entry_price = base_entry + (total_adverse_drag_pips * pip_size)
+                    else:
+                        entry_price = base_entry - (total_adverse_drag_pips * pip_size)
+
                     entry_time = timestamp
+
+
                     
                     if strategy_name in ('MLConsensusStrategy', 'InstitutionalAIStrategy'):
                         if sig == 'BUY':
@@ -210,14 +244,16 @@ class ExecutionEngine:
                     else:
                         pnl_pips = (entry_price - exit_price) / pip_size
                         
-                    # Apply lot size scaling to PnL
-                    # E.g., base PnL pips is matched. Size acts as multiplier on cash return.
+                    # Apply lot size scaling to PnL and deduct ECN commission ($7/lot)
                     t_log['exit_time'] = timestamp
                     t_log['exit_price'] = exit_price
                     t_log['exit_reason'] = exit_reason
                     t_log['pnl_pips'] = pnl_pips
-                    t_log['pnl_usd'] = pnl_pips * size * self.default_pip_value
+                    gross_usd = pnl_pips * size * self.default_pip_value
+                    comm_usd = commission_per_lot_usd * size
+                    t_log['pnl_usd'] = gross_usd - comm_usd
                     t_log['status'] = 'closed'
+
                     
                     current_equity += t_log['pnl_usd']
                     
@@ -296,11 +332,13 @@ class ExecutionEngine:
         rr_ratio = avg_win_pips / avg_loss_pips if avg_loss_pips > 0 else 0.0
 
         # Drawdown Duration (hours underwater)
+        running_peak = self.initial_capital
         max_dd_duration_hours = 0
         underwater_start = None
         for pt in equity_curve:
             eq = pt['equity']
-            if eq >= peak:
+            if eq >= running_peak:
+                running_peak = eq
                 if underwater_start:
                     dur = (pd.to_datetime(pt['time']) - pd.to_datetime(underwater_start)).total_seconds() / 3600.0
                     max_dd_duration_hours = max(max_dd_duration_hours, dur)
@@ -308,6 +346,9 @@ class ExecutionEngine:
             else:
                 if not underwater_start:
                     underwater_start = pt['time']
+        if underwater_start:
+            dur = (pd.to_datetime(equity_curve[-1]['time']) - pd.to_datetime(underwater_start)).total_seconds() / 3600.0
+            max_dd_duration_hours = max(max_dd_duration_hours, dur)
 
         # Daily Returns & Risk Ratios (Sortino, Calmar, CVaR 95%, Skewness, Kurtosis)
         daily_equity = {}
@@ -352,22 +393,28 @@ class ExecutionEngine:
             kt = float(kurtosis(pct_returns, fisher=False))
         
         # Probabilistic Sharpe Ratio (PSR) & Deflated Sharpe Ratio (DSR)
+        # Ref: Marcos Lopez de Prado (2014) - "The Deflated Sharpe Ratio", Journal of Portfolio Management
         psr = 0.5
         dsr = 0.5
         min_trl_days = 0
         if not pct_returns.empty and len(pct_returns) > 5 and pct_returns.std() > 0:
             from scipy.stats import norm
             n_ret = len(pct_returns)
-            sr_annual = sharpe
-            sr_std = np.sqrt((1.0 - sk * sr_annual + ((kt - 1.0) / 4.0) * (sr_annual ** 2)) / max(n_ret - 1, 1))
-            if sr_std > 0:
-                psr = float(norm.cdf(sr_annual / sr_std))
-                n_trials = 8
-                gamma = 0.5772156649
-                exp_max_sr = ((1.0 - gamma) * norm.ppf(1.0 - 1.0 / n_trials) + gamma * norm.ppf(1.0 - 1.0 / (n_trials * np.e))) * 0.15
-                dsr = float(norm.cdf((sr_annual - exp_max_sr) / max(sr_std, 0.10))) if sr_annual > 0 else 0.0
-                # MinTRL in days for 95% PSR
+            sr_daily = pct_returns.mean() / pct_returns.std()
+            sr_std_daily = np.sqrt((1.0 - sk * sr_daily + ((kt - 1.0) / 4.0) * (sr_daily ** 2)) / max(n_ret - 1, 1))
+            
+            if sr_std_daily > 0:
+                psr = float(norm.cdf(sr_daily / sr_std_daily))
+                num_trials = 10
+                euler_mascheroni = 0.5772156649
+                e_max_sr_daily = (1.0 - euler_mascheroni) * norm.ppf(1.0 - 1.0 / num_trials) + euler_mascheroni * norm.ppf(1.0 - 1.0 / (num_trials * np.e))
+                sr_benchmark_daily = (e_max_sr_daily / np.sqrt(252))
+                dsr_z = (sr_daily - sr_benchmark_daily) / sr_std_daily
+                dsr = float(norm.cdf(dsr_z))
+                
+                sr_annual = sharpe
                 min_trl_days = int(1.0 + (1.0 - sk * sr_annual + ((kt - 1.0) / 4.0) * (sr_annual ** 2)) * (norm.ppf(0.95) / max(sr_annual, 0.01)) ** 2)
+
 
         # Yearly YoY Breakdown Matrix (2018 - 2025)
         df_trades = pd.DataFrame(closed_trades)
