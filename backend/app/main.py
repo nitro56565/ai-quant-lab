@@ -111,18 +111,15 @@ def get_trades(limit: int = 500):
 def get_pending_orders():
     """
     Pending Limit Orders API:
-    Returns the list of active pending limit retrace orders waiting for broker limit fills.
+    Queries SQLite Single Source of Truth (institutional_ledger.db) directly for active pending limit orders.
     """
-    state_file = "live_trading_engine/logs/paper_positions_state.json"
-    if os.path.exists(state_file):
-        try:
-            with open(state_file, "r") as f:
-                data = json.load(f)
-            orders = data.get("pending_orders", [])
-            return {"status": "SUCCESS", "count": len(orders), "pending_orders": orders}
-        except Exception as e:
-            logger.error(f"Error reading pending orders: {e}")
-    return {"status": "SUCCESS", "count": 0, "pending_orders": []}
+    try:
+        orders = db_manager.get_active_pending_orders()
+        return {"status": "SUCCESS", "count": len(orders), "pending_orders": orders}
+    except Exception as e:
+        logger.error(f"Error querying pending orders from SQLite: {e}")
+        return {"status": "SUCCESS", "count": 0, "pending_orders": []}
+
 
 
 

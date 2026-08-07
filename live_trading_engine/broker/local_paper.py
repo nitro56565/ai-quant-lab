@@ -1,13 +1,18 @@
 """
-Local High-Fidelity Paper Broker Gateway Module.
-Provides in-memory simulated order execution with limit retrace fills, slippage, and PnL ledger tracking.
+High-Fidelity Execution Simulator & Local Paper Broker Module — AI Quant Lab v5.0.
+Provides broker-agnostic simulated order execution with limit retrace fills, slippage drag, and PnL ledger tracking.
+Implements BaseExecutionGateway and BaseBrokerAdapter with Clock dependency injection.
 """
 
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Dict, Any, List, Optional
 import logging
+
 from live_trading_engine.config import LiveTradingConfig
 from live_trading_engine.order_manager import OrderManager
+from live_trading_engine.broker.base_gateway import BaseExecutionGateway
+from live_trading_engine.clock import BaseClock, RealClock
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +31,15 @@ class BaseBrokerAdapter(ABC):
         pass
 
 
-class LocalPaperBroker(BaseBrokerAdapter):
+class ExecutionSimulator(BaseBrokerAdapter, BaseExecutionGateway):
     """
-    High-Fidelity In-Memory Paper Broker with simulated latency, slippage, and limit fills.
+    High-Fidelity Vendor-Agnostic Execution Simulator.
+    Calculates execution fills, slippage drag, commission, and dynamic account equity.
     """
-    def __init__(self, config: LiveTradingConfig, order_manager: OrderManager):
+    def __init__(self, config: LiveTradingConfig, order_manager: OrderManager, clock: Optional[BaseClock] = None):
         self.config = config
         self.order_manager = order_manager
+        self.clock = clock or RealClock()
 
     @property
     def balance(self) -> float:
@@ -41,22 +48,37 @@ class LocalPaperBroker(BaseBrokerAdapter):
 
     def place_order(self, symbol: str, signal_type: str, signal_time: datetime,
                     ask: float, bid: float, atr: float, risk_pct: float) -> dict:
-        return self.order_manager.create_limit_order(symbol, signal_type, signal_time, ask, bid, atr, risk_pct)
+        return self.order_manager.create_limit_order(
+            symbol=symbol,
+            signal_type=signal_type,
+            signal_time=signal_time,
+            ask=ask,
+            bid=bid,
+            atr=atr,
+            risk_pct=risk_pct
+        )
 
     def on_tick(self, current_time: datetime, ask: float, bid: float) -> list:
-        closed_trades = self.order_manager.update_positions_on_tick(current_time, ask, bid)
-        return closed_trades
+        return self.order_manager.update_positions_on_tick(current_time, ask, bid)
 
     def get_account_summary(self) -> dict:
-        open_pnl = sum([0.0 for p in self.order_manager.open_positions])
-        current_balance = self.balance
-        equity = current_balance + open_pnl
+        open_count = len(self.order_manager.open_positions)
+        pending_count = len(self.order_manager.pending_orders)
+        closed_count = len(self.order_manager.closed_trades)
+
+        curr_balance = self.balance
+        unrealized_pnl = 0.0
+
         return {
-            "broker_type": "LOCAL_PAPER_BROKER",
-            "balance": round(current_balance, 2),
-            "equity": round(equity, 2),
-            "open_positions_count": len(self.order_manager.open_positions),
-            "pending_orders_count": len(self.order_manager.pending_orders),
-            "closed_trades_count": len(self.order_manager.closed_trades)
+            "initial_capital": self.config.initial_capital,
+            "balance": round(curr_balance, 2),
+            "equity": round(curr_balance + unrealized_pnl, 2),
+            "unrealized_pnl": round(unrealized_pnl, 2),
+            "open_positions_count": open_count,
+            "pending_orders_count": pending_count,
+            "closed_trades_count": closed_count,
+            "currency": "USD"
         }
 
+# Backward-compatible alias
+LocalPaperBroker = ExecutionSimulator

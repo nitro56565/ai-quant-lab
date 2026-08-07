@@ -6,6 +6,7 @@ Tracks pending orders, active positions, stop loss/take profit triggers, trade h
 import json
 import os
 from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List
 import pandas as pd
 import logging
 from live_trading_engine.config import LiveTradingConfig
@@ -13,9 +14,13 @@ from live_trading_engine.database import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
+from live_trading_engine.clock import BaseClock, RealClock
+
 class OrderManager:
-    def __init__(self, config: LiveTradingConfig):
+
+    def __init__(self, config: LiveTradingConfig, clock: Optional[BaseClock] = None):
         self.config = config
+        self.clock = clock or RealClock()
         self.log_dir = config.log_dir
         os.makedirs(self.log_dir, exist_ok=True)
         
@@ -61,9 +66,11 @@ class OrderManager:
         }
         self.order_counter += 1
         self.pending_orders.append(order)
+        self.db.save_pending_order(order)
         self.save_state()
         logger.info(f"📌 PENDING LIMIT ORDER Created: {order['order_id']} | {symbol} {signal_type} @ {limit_price:.5f} (SL: {sl:.5f}, TP: {tp:.5f})")
         return order
+
 
     def update_positions_on_tick(self, current_time: datetime, ask: float, bid: float) -> list:
         """
@@ -108,15 +115,20 @@ class OrderManager:
                     "lots": 1.0 # Base 1 Lot
                 }
                 self.open_positions.append(pos)
+                self.db.remove_pending_order(ord['order_id'])
+                self.db.save_open_position(pos)
                 logger.info(f"🟢 ORDER FILLED: Position {pos['position_id']} OPENED | {ord['symbol']} {ord['signal_type']} @ {fill_price:.5f}")
             elif is_weekend:
+                self.db.remove_pending_order(ord['order_id'])
                 logger.info(f"🧹 Order {ord['order_id']} CANCELLED for Weekend Market Closure (Weekend Gap Protection).")
             elif age_hours < ord['expiry_hours']:
                 remaining_pending.append(ord)
             else:
+                self.db.remove_pending_order(ord['order_id'])
                 logger.info(f"⏳ Order {ord['order_id']} EXPIRED after 3 hours without fill.")
 
         self.pending_orders = remaining_pending
+
 
 
         # 2. Process Open Positions for SL / TP / Time Exits
@@ -243,9 +255,11 @@ class OrderManager:
                 })
 
                 self.closed_trades.append(closed_trade)
+                self.db.remove_open_position(pos['position_id'])
 
                 newly_closed.append(closed_trade)
                 logger.info(f"🔴 POSITION CLOSED [{close_reason}]: {pos['position_id']} | PnL: {pnl_pips:+.2f} pips (${pnl_usd:+.2f})")
+
 
             else:
                 remaining_positions.append(pos)

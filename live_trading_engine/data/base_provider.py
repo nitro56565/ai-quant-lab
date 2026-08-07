@@ -1,24 +1,40 @@
 """
-Abstract Market Data Provider Interface v3.0.
-Decouples data sources (OANDA, Replay, MT5, CSV) from downstream aggregation and execution pipelines.
+Abstract Market Data Provider Interface v5.0.
+Decouples market data sources (OANDA, Polygon, TwelveData, Interactive Brokers, CSV Replay)
+from downstream feature engineering, ML signal inference, and execution pipelines.
 """
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, Any
+from typing import Callable, Dict, Any, Optional
+import pandas as pd
 
-class MarketDataProvider(ABC):
+class BaseMarketDataProvider(ABC):
     """
-    Abstract Interface for Real-Time & Historical Replay Market Data Providers.
+    Abstract Interface for Real-Time Streaming & Historical Market Data Providers.
     """
     @abstractmethod
-    def start(self, symbol: str, tick_callback: Callable[[Dict[str, Any]], None]):
+    def fetch_historical_candles(self, symbol: str, timeframe: str = "1h", count: int = 48) -> pd.DataFrame:
         """
-        Starts tick streaming or replay loop.
+        Fetches historical candles as a pandas DataFrame with datetime index.
         """
         pass
 
     @abstractmethod
-    def stop(self):
+    def get_latest_quote(self, symbol: str) -> Dict[str, Any]:
+        """
+        Returns latest market quote: {'ask': float, 'bid': float, 'mid': float, 'spread': float, 'timestamp': datetime}
+        """
+        pass
+
+    @abstractmethod
+    def start_streaming(self, symbol: str, callback: Callable[[Dict[str, Any]], None]):
+        """
+        Starts tick/candle streaming loop.
+        """
+        pass
+
+    @abstractmethod
+    def stop_streaming(self):
         """
         Stops tick streaming gracefully.
         """
@@ -27,6 +43,10 @@ class MarketDataProvider(ABC):
     @abstractmethod
     def get_status(self) -> Dict[str, Any]:
         """
-        Returns operational status metrics (connected, tick count, last tick time).
+        Returns operational status metrics (provider_name, connected, tick_count, last_tick_time).
         """
         pass
+
+# Backward-compatible alias
+MarketDataProvider = BaseMarketDataProvider
+

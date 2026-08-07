@@ -24,6 +24,10 @@ from live_trading_engine.data import RealTimeDataStreamer
 from live_trading_engine.monitoring.telegram_notifier import TelegramNotifier
 from live_trading_engine.monitoring.metrics import get_metrics_exporter
 
+from live_trading_engine.clock import RealClock
+from live_trading_engine.data.oanda_provider import OANDAMarketDataProvider
+from live_trading_engine.broker.local_paper import ExecutionSimulator, LocalPaperBroker
+
 # IST Timezone Helper
 def format_ist_utc():
     now_utc = datetime.now(timezone.utc)
@@ -35,12 +39,14 @@ logger = logging.getLogger("InstitutionalPaperTradingDaemon")
 
 def main():
     print("=================================================================================")
-    print("  🚀 STARTING INSTITUTIONAL LIVE PAPER TRADING DAEMON v3.0 — EURUSD")
-    print("  Broker Gateway: LOCAL PAPER BROKER | Initial Capital: $10,000.00 | Risk/Trade: 1.0%")
+    print("  🚀 STARTING INSTITUTIONAL LIVE PAPER TRADING DAEMON v5.0 — EURUSD")
+    print("  Broker Gateway: EXECUTION SIMULATOR (LOCAL ECN) | Initial Capital: $10,000.00")
+    print("  Data Adapter: DECOUPLED OANDA MARKET DATA PROVIDER | Clock: REAL UTC CLOCK")
     print("=================================================================================\n")
 
     config = LiveTradingConfig()
-
+    clock = RealClock()
+    provider = OANDAMarketDataProvider(clock=clock)
 
     db_manager = DatabaseManager("live_trading_engine/logs/institutional_ledger.db")
     event_bus = EventBus()
@@ -53,8 +59,10 @@ def main():
     signal_engine = SignalEngine(event_bus=event_bus, model_dir="models/production")
     decision_engine = DecisionEngine(event_bus=event_bus, db_manager=db_manager)
     risk_guardian = PreTradeRiskGuardian(config=config)
-    order_manager = OrderManager(config=config)
-    broker = LocalPaperBroker(config=config, order_manager=order_manager)
+    order_manager = OrderManager(config=config, clock=clock)
+    broker = ExecutionSimulator(config=config, order_manager=order_manager, clock=clock)
+    streamer = RealTimeDataStreamer(symbol=config.symbol, timeframe=config.timeframe, clock=clock, provider=provider)
+
 
     def handle_order_request(event: Event):
         trade_req = event.data

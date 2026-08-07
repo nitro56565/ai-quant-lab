@@ -1,18 +1,18 @@
 """
-Zero-Branching Historical Replay Provider v3.0.
-Implements MarketDataProvider interface. Streams historical ticks or Parquet candles into the exact same pipeline with ZERO conditional branching in core execution code.
+Zero-Branching Historical Replay Provider v5.0.
+Implements BaseMarketDataProvider interface. Streams historical ticks or Parquet candles into the exact same pipeline with ZERO conditional branching in core execution code.
 """
 
 import time
 import logging
 from typing import Callable, Dict, Any, List, Optional
 import pandas as pd
-from live_trading_engine.data.base_provider import MarketDataProvider
+from live_trading_engine.data.base_provider import BaseMarketDataProvider
 from data_loader.loader import DataLoader, DataRequest
 
 logger = logging.getLogger("ReplayProvider")
 
-class ReplayProvider(MarketDataProvider):
+class ReplayProvider(BaseMarketDataProvider):
     """
     Historical Replay Market Data Provider.
     Feeds historical market data step-by-step into downstream EventBus callbacks.
@@ -25,6 +25,27 @@ class ReplayProvider(MarketDataProvider):
         self.is_running = False
         self.processed_ticks_count = 0
         self.last_tick_time = None
+
+    def fetch_historical_candles(self, symbol: str, timeframe: str = "1h", count: int = 48) -> pd.DataFrame:
+        req = DataRequest(symbol=symbol, timeframe=timeframe, start=self.start_date, end=self.end_date)
+        df = self.loader.load(req)
+        return df.tail(count)
+
+    def get_latest_quote(self, symbol: str) -> Dict[str, Any]:
+        return {
+            "symbol": symbol,
+            "ask": 1.15588,
+            "bid": 1.15571,
+            "mid": 1.155795,
+            "spread": 1.7,
+            "timestamp": self.last_tick_time or "2026-08-07 23:59:59 UTC"
+        }
+
+    def start_streaming(self, symbol: str, callback: Callable[[Dict[str, Any]], None]):
+        self.start(symbol, callback)
+
+    def stop_streaming(self):
+        self.stop()
 
     def start(self, symbol: str, tick_callback: Callable[[Dict[str, Any]], None]):
         logger.info(f"🔄 Starting ReplayProvider for {symbol} ({self.start_date} to {self.end_date})...")

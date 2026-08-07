@@ -116,8 +116,41 @@ class CandleLedger(Base):
     tick_volume = Column(Integer, nullable=False)
 
 
+class PendingOrderLedger(Base):
+    __tablename__ = "pending_orders"
+
+    order_id = Column(String(32), primary_key=True)
+    symbol = Column(String(16), index=True, nullable=False)
+    signal_type = Column(String(8), nullable=False) # BUY or SELL
+    status = Column(String(16), default="PENDING_LIMIT")
+    signal_time = Column(String(32), nullable=False)
+    created_time_dt = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    limit_price = Column(Float, nullable=False)
+    stop_loss = Column(Float, nullable=False)
+    take_profit = Column(Float, nullable=False)
+    risk_pct = Column(Float, default=0.5)
+    atr = Column(Float, default=0.0012)
+    expiry_hours = Column(Integer, default=3)
+
+
+class OpenPositionLedger(Base):
+    __tablename__ = "open_positions"
+
+    position_id = Column(String(32), primary_key=True)
+    symbol = Column(String(16), index=True, nullable=False)
+    type = Column(String(8), nullable=False) # BUY or SELL
+    entry_time = Column(String(32), nullable=False)
+    entry_dt = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    entry_price = Column(Float, nullable=False)
+    stop_loss = Column(Float, nullable=False)
+    take_profit = Column(Float, nullable=False)
+    risk_pct = Column(Float, default=0.5)
+    lots = Column(Float, default=1.0)
+
+
 class DecisionTraceLedger(Base):
     __tablename__ = "decision_trace"
+
 
     trace_id = Column(String(36), primary_key=True)
     timestamp = Column(DateTime, index=True, nullable=False)
@@ -492,6 +525,150 @@ class DatabaseManager:
             session.rollback()
             logger.error(f"Error saving event sourcing record: {e}")
             return ""
+    def save_pending_order(self, order_dict: Dict[str, Any]):
+        session = self.SessionLocal()
+        try:
+            order_id = str(order_dict.get("order_id"))
+            entry = session.query(PendingOrderLedger).filter(PendingOrderLedger.order_id == order_id).first()
+            if not entry:
+                sig_time = str(order_dict.get("signal_time", ""))
+                created_dt = order_dict.get("created_time_dt")
+                if isinstance(created_dt, str):
+                    created_dt = pd.to_datetime(created_dt).to_pydatetime()
+                elif created_dt is None:
+                    created_dt = datetime.now(timezone.utc)
+
+                entry = PendingOrderLedger(
+                    order_id=order_id,
+                    symbol=str(order_dict.get("symbol", "EURUSD")),
+                    signal_type=str(order_dict.get("signal_type", "BUY")),
+                    status=str(order_dict.get("status", "PENDING_LIMIT")),
+                    signal_time=sig_time,
+                    created_time_dt=created_dt,
+                    limit_price=float(order_dict.get("limit_price", 0.0)),
+                    stop_loss=float(order_dict.get("stop_loss", 0.0)),
+                    take_profit=float(order_dict.get("take_profit", 0.0)),
+                    risk_pct=float(order_dict.get("risk_pct", 0.5)),
+                    atr=float(order_dict.get("atr", 0.0012)),
+                    expiry_hours=int(order_dict.get("expiry_hours", 3))
+                )
+                session.add(entry)
+                session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error saving pending order to database: {e}")
         finally:
             session.close()
+
+    def remove_pending_order(self, order_id: str):
+        session = self.SessionLocal()
+        try:
+            session.query(PendingOrderLedger).filter(PendingOrderLedger.order_id == order_id).delete()
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error removing pending order from database: {e}")
+        finally:
+            session.close()
+
+    def clear_all_pending_orders(self):
+        session = self.SessionLocal()
+        try:
+            session.query(PendingOrderLedger).delete()
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error clearing pending orders from database: {e}")
+        finally:
+            session.close()
+
+    def get_active_pending_orders(self) -> List[Dict[str, Any]]:
+        session = self.SessionLocal()
+        try:
+            records = session.query(PendingOrderLedger).all()
+            res = []
+            for r in records:
+                res.append({
+                    "order_id": r.order_id,
+                    "symbol": r.symbol,
+                    "signal_type": r.signal_type,
+                    "status": r.status,
+                    "signal_time": r.signal_time,
+                    "created_time_dt": r.created_time_dt,
+                    "limit_price": r.limit_price,
+                    "stop_loss": r.stop_loss,
+                    "take_profit": r.take_profit,
+                    "risk_pct": r.risk_pct,
+                    "atr": r.atr,
+                    "expiry_hours": r.expiry_hours
+                })
+            return res
+        finally:
+            session.close()
+
+    def save_open_position(self, pos_dict: Dict[str, Any]):
+        session = self.SessionLocal()
+        try:
+            pos_id = str(pos_dict.get("position_id"))
+            entry = session.query(OpenPositionLedger).filter(OpenPositionLedger.position_id == pos_id).first()
+            if not entry:
+                entry_dt = pos_dict.get("entry_dt")
+                if isinstance(entry_dt, str):
+                    entry_dt = pd.to_datetime(entry_dt).to_pydatetime()
+                elif entry_dt is None:
+                    entry_dt = datetime.now(timezone.utc)
+
+                entry = OpenPositionLedger(
+                    position_id=pos_id,
+                    symbol=str(pos_dict.get("symbol", "EURUSD")),
+                    type=str(pos_dict.get("type", "BUY")),
+                    entry_time=str(pos_dict.get("entry_time", "")),
+                    entry_dt=entry_dt,
+                    entry_price=float(pos_dict.get("entry_price", 0.0)),
+                    stop_loss=float(pos_dict.get("stop_loss", 0.0)),
+                    take_profit=float(pos_dict.get("take_profit", 0.0)),
+                    risk_pct=float(pos_dict.get("risk_pct", 0.5)),
+                    lots=float(pos_dict.get("lots", 1.0))
+                )
+                session.add(entry)
+                session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error saving open position to database: {e}")
+        finally:
+            session.close()
+
+    def remove_open_position(self, pos_id: str):
+        session = self.SessionLocal()
+        try:
+            session.query(OpenPositionLedger).filter(OpenPositionLedger.position_id == pos_id).delete()
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error removing open position from database: {e}")
+        finally:
+            session.close()
+
+    def get_active_open_positions(self) -> List[Dict[str, Any]]:
+        session = self.SessionLocal()
+        try:
+            records = session.query(OpenPositionLedger).all()
+            res = []
+            for r in records:
+                res.append({
+                    "position_id": r.position_id,
+                    "symbol": r.symbol,
+                    "type": r.type,
+                    "entry_time": r.entry_time,
+                    "entry_dt": r.entry_dt,
+                    "entry_price": r.entry_price,
+                    "stop_loss": r.stop_loss,
+                    "take_profit": r.take_profit,
+                    "risk_pct": r.risk_pct,
+                    "lots": r.lots
+                })
+            return res
+        finally:
+            session.close()
+
 

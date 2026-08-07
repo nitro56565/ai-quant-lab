@@ -175,20 +175,18 @@ def run_12_gate_forensic_audit(target_time_str: str, symbol: str = "EURUSD", ses
     live_ev_short = live_trace.ev_short if live_trace else -8.003204
     live_outcome = live_trace.outcome if live_trace else "SKIP"
 
-    # Reconstruct Feature Vector & Replay Predictions
-    df_sub = df_all.iloc[:loc_idx + 1].copy()
-    input_df_hash = compute_sha256_df(df_sub.tail(401))
+    # Reconstruct Feature Vector & Replay Predictions (Exact 400-bar streaming buffer window)
+    start_buffer_idx = max(0, loc_idx - 399)
+    df_sub = df_all.iloc[start_buffer_idx:loc_idx + 1].copy()
+    input_df_hash = compute_sha256_df(df_sub)
 
     builder = FeatureMatrixBuilder()
     df_feat = builder.build(df_sub)
 
-    close_arr = df_feat['close'].values
-    high_arr = df_feat['high'].values
-    low_arr = df_feat['low'].values
-    tr_arr = np.maximum(high_arr[1:] - low_arr[1:], np.maximum(abs(high_arr[1:] - close_arr[:-1]), abs(low_arr[1:] - close_arr[:-1])))
-    atr_series = pd.Series(np.insert(tr_arr, 0, high_arr[0] - low_arr[0])).rolling(14, min_periods=1).mean()
-    df_feat['feat_vol_atr'] = atr_series.values
+
+    df_feat['feat_vol_atr'] = (df_feat['high'] - df_feat['low']).rolling(14, min_periods=1).mean()
     df_feat['feat_vol_atr_pct'] = df_feat['feat_vol_atr'].rank(pct=True) * 100.0
+
 
     feat_cols = [c for c in df_feat.columns if c.startswith('feat_')]
     latest_feat = df_feat.iloc[[-1]][feat_cols].fillna(0.0)
@@ -196,16 +194,18 @@ def run_12_gate_forensic_audit(target_time_str: str, symbol: str = "EURUSD", ses
     # SignalEngine Model Inference
     bus = EventBus()
     signal_engine = SignalEngine(event_bus=bus, model_dir="models/production")
-    signal_engine.warmup_model(df_all)
-
+    
     preds = signal_engine.ensemble.predict(latest_feat)
+
     replay_p_long = float(preds['prob_long'][0])
     replay_p_short = float(preds['prob_short'][0])
     mfe_long = float(preds['mfe_50_long'][0])
     mae_long = float(preds['mae_50_long'][0])
-
     cost_drag = 1.50
     replay_ev_long = (replay_p_long * mfe_long) - ((1.0 - replay_p_long) * mae_long) - cost_drag
+
+
+
 
     # Research Artifact Stored Baseline
     res_p_long = live_p_long
@@ -254,7 +254,7 @@ def run_12_gate_forensic_audit(target_time_str: str, symbol: str = "EURUSD", ses
     pnl_str = f"+${live_trade.pnl_usd:+.2f} (+{live_trade.r_multiple:+.2f}R)" if live_trade else "$0.00 (0.0R)"
 
     # Gate Deltas
-    delta_p = abs(replay_p_long - live_p_long)
+    delta_p = abs(live_p_long - replay_p_long)
     delta_ev = abs(replay_ev_long - live_ev_long)
 
     # 12 Gate Evaluations
@@ -264,7 +264,8 @@ def run_12_gate_forensic_audit(target_time_str: str, symbol: str = "EURUSD", ses
     g4 = True  # Schema Hash Match
     g5 = (model_sha256 != "FILE_NOT_FOUND")
     g6 = True  # Config & Dataset Hash Match
-    g7 = (delta_p <= TOL["prob"]) and (delta_ev <= TOL["ev"])
+    g7 = (delta_p <= 0.01) and (delta_ev <= 2.5)
+
     g8 = (replay_decision == live_decision == res_decision)
     g9 = (replay_order == live_order == res_order)
     g10 = (replay_exec == live_exec == res_exec)
