@@ -52,40 +52,43 @@ class TickVaultClient:
     def download_hourly_bi5(self, symbol, year, month, day, hour):
         """
         Download hourly BI5 file for a specific hour from Dukascopy.
-        
-        Args:
-            symbol: Trading symbol (e.g., "EURUSD")
-            year: Year (e.g., 2018)
-            month: Month (1-12)
-            day: Day (1-31)
-            hour: Hour (0-23)
-            
-        Returns:
-            Raw BI5 file content as bytes
+        Implements jittered exponential backoff for temporary 503/429/connection drops.
+        Returns raw BI5 bytes, or b'' if empty/404.
         """
-        # Dukascopy URL format for historical tick data.
-        # Note: Dukascopy month format is 0-indexed (00 = Jan, 11 = Dec).
-        url = f"{self.BASE_URL}/{symbol}/{year}/{(month - 1):02d}/{day:02d}/{hour:02d}h_ticks.bi5"
+        import time
+        import random
 
-        
-        try:
-            response = self.session.get(url)
-            response.raise_for_status()
-            return response.content
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to download {symbol} for {year}-{month:02d}-{day:02d} {hour:02d}:00: {e}")
-            raise
-    
-    def download_data(self, symbol, start_date, end_date):
-        """
-        Download data for a symbol between dates.
-        
-        Args:
-            symbol: Trading symbol
-            start_date: Start date for data (datetime)
-            end_date: End date for data (datetime)
-            
-        Returns:
-            Downloaded market data
-        """
-        pass
+        url = f"{self.BASE_URL}/{symbol}/{year}/{(month - 1):02d}/{day:02d}/{hour:02d}h_ticks.bi5"
+        max_attempts = 5
+        base_backoff = 1.0
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = self.session.get(url, timeout=10)
+                if response.status_code == 200:
+                    return response.content
+                elif response.status_code == 404:
+                    # Permanent missing file (weekend/market closure) -> return empty immediately without retry
+                    return b''
+                elif response.status_code in (429, 503, 500, 502, 504):
+                    if attempt < max_attempts:
+                        sleep_time = base_backoff * (2 ** (attempt - 1)) + random.uniform(0.1, 0.5)
+                        logger.debug(f"HTTP {response.status_code} throttling for {url} (attempt {attempt}/{max_attempts}). Retrying in {sleep_time:.2f}s...")
+                        time.sleep(sleep_time)
+                        continue
+                    else:
+                        response.raise_for_status()
+                else:
+                    response.raise_for_status()
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.ChunkedEncodingError) as e:
+                if attempt < max_attempts:
+                    sleep_time = base_backoff * (2 ** (attempt - 1)) + random.uniform(0.1, 0.5)
+                    logger.debug(f"Network drop ({e}) for {url} (attempt {attempt}/{max_attempts}). Retrying in {sleep_time:.2f}s...")
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    logger.error(f"Failed to download {url} after {max_attempts} attempts: {e}")
+                    raise
+
+        return b''
+

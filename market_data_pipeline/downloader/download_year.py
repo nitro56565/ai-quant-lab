@@ -56,77 +56,127 @@ def _download_hour(client, symbol, year, month, day, hour, file_path):
                 logger.error(f"Failed to download {file_path.name} after {max_retries} attempts: {e}")
                 return 'failed', str(e)
 
-def download_year(symbol, year, download_dir="downloads"):
+def is_trading_hour(symbol: str, dt: datetime) -> bool:
     """
-    Download hourly BI5 files for a symbol for the entire year from Dukascopy public feed.
-    Downloads are executed concurrently using thread pool.
-    
-    Args:
-        symbol: Trading symbol (e.g., "EURUSD")
-        year: Year to download (e.g., 2018)
-        download_dir: Directory to save downloaded files
-        
-    Returns:
-        Path to downloaded data directory
+    Check if the given datetime is an expected trading hour for the symbol.
+    Forex markets close Friday ~22:00 UTC to Sunday ~22:00 UTC.
+    Gold (XAUUSD) additionally closes daily from 22:00 to 23:00 UTC for maintenance.
     """
-    # Create download directory structure
+    weekday = dt.weekday() # 0 = Monday, 6 = Sunday
+    hour = dt.hour
+
+    # Friday after 22:00 UTC -> Closed
+    if weekday == 4 and hour >= 22:
+        return False
+    # Saturday -> Closed all day
+    if weekday == 5:
+        return False
+    # Sunday before 22:00 UTC -> Closed
+    if weekday == 6 and hour < 22:
+        return False
+
+    # XAUUSD Daily Maintenance Window: 22:00 to 23:00 UTC
+    if "XAU" in symbol.upper() and hour == 22:
+        return False
+
+    return True
+
+def download_year(symbol, year, download_dir="downloads", max_workers=3):
+    """
+    Download hourly BI5 files for a symbol for expected trading hours in the year.
+    Features 2-pass failure retry queue (failed_hours.json) and trading calendar filtering.
+    """
+    import json
+    import time
+    from pathlib import Path
+
     symbol_dir = Path(download_dir) / symbol / str(year)
     symbol_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Initialize TickVault client (no authentication required)
+    failed_queue_path = symbol_dir / "failed_hours.json"
+
     client = TickVaultClient()
-    
-    # Calculate total hours in the year
+
     start_date = datetime(year, 1, 1)
     end_date = datetime(year, 12, 31, 23, 59, 59)
-    
+
     tasks = []
     current = start_date
     while current <= end_date:
-        month = current.month
-        day = current.day
-        hour = current.hour
-        
-        file_path = symbol_dir / f"{year}-{month:02d}-{day:02d}_{hour:02d}.bi5"
-        tasks.append((month, day, hour, file_path))
+        if is_trading_hour(symbol, current):
+            month = current.month
+            day = current.day
+            hour = current.hour
+            file_path = symbol_dir / f"{year}-{month:02d}-{day:02d}_{hour:02d}.bi5"
+            tasks.append((month, day, hour, file_path))
         current += timedelta(hours=1)
-        
+
     total_hours = len(tasks)
+    logger.info(f"Starting Trading-Calendar-Filtered download for {symbol} {year}. Active trading hours: {total_hours} (Skipped ~{8760 - total_hours} non-trading closure hours)")
+
     downloaded_count = 0
     skipped_count = 0
-    failed_count = 0
-    
-    logger.info(f"Starting concurrent download for {symbol} {year}. Total hours: {total_hours}")
-    
-    # Parallel execution using ThreadPoolExecutor
-    max_workers = 8
+    failed_tasks = []
+
+    # PASS 1: Main Download Pass
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_task = {
             executor.submit(_download_hour, client, symbol, year, month, day, hour, file_path): (month, day, hour, file_path)
             for month, day, hour, file_path in tasks
         }
-        
+
         for index, future in enumerate(as_completed(future_to_task), 1):
-            month, day, hour, file_path = future_to_task[future]
+            task_info = future_to_task[future]
+            month, day, hour, file_path = task_info
             try:
                 status, info = future.result()
-                if status == 'downloaded':
+                if status == 'downloaded' or status == 'empty':
                     downloaded_count += 1
                 elif status in ('skipped_data', 'skipped_empty'):
                     skipped_count += 1
-                elif status == 'empty':
-                    downloaded_count += 1
                 else:
-                    failed_count += 1
+                    failed_tasks.append({"year": year, "month": month, "day": day, "hour": hour, "file": str(file_path)})
             except Exception as e:
-                failed_count += 1
-                logger.error(f"Error handling task for {file_path.name}: {e}")
-                
+                failed_tasks.append({"year": year, "month": month, "day": day, "hour": hour, "file": str(file_path)})
+                logger.error(f"Pass 1 failure for {file_path.name}: {e}")
+
             if index % 500 == 0 or index == total_hours:
-                logger.info(f"Download Progress: {index}/{total_hours} (Downloaded/Parsed: {downloaded_count}, Skipped: {skipped_count}, Failed: {failed_count})")
-                
-    logger.info(f"Download complete. Processed successfully: {downloaded_count}, Skipped: {skipped_count}, Failed: {failed_count}")
-    
+                logger.info(f"Pass 1 Progress: {index}/{total_hours} (Active: {downloaded_count}, Skipped: {skipped_count}, Failed: {len(failed_tasks)})")
+
+    # PASS 2: Retry Failed Hours Queue
+    if failed_tasks:
+        logger.warning(f"Pass 1 complete with {len(failed_tasks)} failed hours. Pausing 5s for throttling recovery before Pass 2 Retry Queue...")
+        time.sleep(5.0)
+
+        # Save failed queue to JSON for auditability
+        with open(failed_queue_path, 'w') as f:
+            json.dump(failed_tasks, f, indent=2)
+
+        pass2_resolved = 0
+        still_failed = []
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_to_failed = {
+                executor.submit(_download_hour, client, symbol, year, f_info['month'], f_info['day'], f_info['hour'], Path(f_info['file'])): f_info
+                for f_info in failed_tasks
+            }
+            for future in as_completed(future_to_failed):
+                f_info = future_to_failed[future]
+                try:
+                    status, _ = future.result()
+                    if status in ('downloaded', 'empty', 'skipped_data', 'skipped_empty'):
+                        pass2_resolved += 1
+                        downloaded_count += 1
+                    else:
+                        still_failed.append(f_info)
+                except Exception as e:
+                    still_failed.append(f_info)
+
+        logger.info(f"Pass 2 Complete: Resolved {pass2_resolved}/{len(failed_tasks)} failed hours. Unresolved remaining: {len(still_failed)}")
+        with open(failed_queue_path, 'w') as f:
+            json.dump(still_failed, f, indent=2)
+
+    logger.info(f"Download year complete for {symbol} {year}. Total Active Handled: {downloaded_count}, Skipped: {skipped_count}")
     return str(symbol_dir)
+
 
 
