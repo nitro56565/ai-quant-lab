@@ -1,0 +1,13 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+catboost_info
+.env
+tick_vault_data
+downloads
+market_data_pipeline/output
+

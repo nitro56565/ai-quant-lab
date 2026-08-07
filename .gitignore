@@ -17,3 +17,5 @@ market_data_pipeline/metadata/
 # IDE
 .vscode/
 .idea/
+
+.env
