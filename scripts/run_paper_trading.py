@@ -26,7 +26,7 @@ from live_trading_engine.monitoring.metrics import get_metrics_exporter
 
 from live_trading_engine.clock import RealClock
 from live_trading_engine.data.oanda_provider import OANDAMarketDataProvider
-from live_trading_engine.broker.local_paper import ExecutionSimulator, LocalPaperBroker
+from live_trading_engine.broker import ExecutionSimulator, LocalPaperBroker, OANDALiveBrokerGateway
 
 # IST Timezone Helper
 def format_ist_utc():
@@ -38,10 +38,11 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - INFO - 
 logger = logging.getLogger("InstitutionalPaperTradingDaemon")
 
 def main():
+    broker_mode = os.getenv("OANDA_BROKER_TYPE", "LOCAL_SIMULATOR").upper()
     print("=================================================================================")
-    print("  🚀 STARTING INSTITUTIONAL LIVE PAPER TRADING DAEMON v5.0 — EURUSD")
-    print("  Broker Gateway: EXECUTION SIMULATOR (LOCAL ECN) | Initial Capital: $10,000.00")
-    print("  Data Adapter: DECOUPLED OANDA MARKET DATA PROVIDER | Clock: REAL UTC CLOCK")
+    print(f"  🚀 STARTING INSTITUTIONAL LIVE PAPER TRADING DAEMON v5.0 — EURUSD")
+    print(f"  Broker Gateway: {broker_mode} | Initial Capital: $10,000.00")
+    print(f"  Data Adapter: DECOUPLED OANDA MARKET DATA PROVIDER | Clock: REAL UTC CLOCK")
     print("=================================================================================\n")
 
     config = LiveTradingConfig()
@@ -60,8 +61,16 @@ def main():
     decision_engine = DecisionEngine(event_bus=event_bus, db_manager=db_manager)
     risk_guardian = PreTradeRiskGuardian(config=config)
     order_manager = OrderManager(config=config, clock=clock)
-    broker = ExecutionSimulator(config=config, order_manager=order_manager, clock=clock)
+
+    if broker_mode in ["OANDA_PRACTICE", "OANDA_LIVE", "OANDA"]:
+        broker = OANDALiveBrokerGateway(config=config, order_manager=order_manager, clock=clock)
+        logger.info("🟢 Registered OANDALiveBrokerGateway: Orders will be submitted directly to OANDA Practice REST API!")
+    else:
+        broker = ExecutionSimulator(config=config, order_manager=order_manager, clock=clock)
+        logger.info("🟢 Registered ExecutionSimulator: Orders executed in high-fidelity local paper simulator.")
+
     streamer = RealTimeDataStreamer(symbol=config.symbol, timeframe=config.timeframe, clock=clock, provider=provider)
+
 
 
     def handle_order_request(event: Event):

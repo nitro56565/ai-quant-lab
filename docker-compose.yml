@@ -10,6 +10,10 @@ services:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
+      - OANDA_BROKER_TYPE=OANDA_PRACTICE
+
+
+
     volumes:
       - ./live_trading_engine:/app/live_trading_engine
       - ./scripts:/app/scripts
