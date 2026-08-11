@@ -23,10 +23,11 @@ class PreTradeRiskGuardian:
             logger.info(f"🛡️ Daily Risk Guardian reset starting equity to ${current_equity:.2f} for {curr_day}")
 
     def evaluate_entry_risk(self, symbol: str, current_equity: float, open_positions_count: int, 
-                            current_time: datetime, vol_rank_pct: float, pending_orders_count: int = 0) -> dict:
+                            current_time: datetime, vol_rank_pct: float, pending_orders_count: int = 0,
+                            signal_direction: str = None, active_direction: str = None) -> dict:
         """
         Evaluates whether a new trade signal passes pre-trade risk criteria.
-        Returns dict with 'allowed': bool, 'risk_multiplier': float, 'reason': str
+        Returns dict with 'allowed': bool, 'risk_multiplier': float, 'reason': str, optional 'action': str
         """
         self.check_daily_reset(current_equity, current_time)
 
@@ -46,18 +47,25 @@ class PreTradeRiskGuardian:
             logger.warning(msg)
             return {"allowed": False, "risk_multiplier": 0.0, "reason": msg}
 
-        # 2. Duplicate Pending Order or Active Position Check
+        # 2. Duplicate Pending Order or Active Position Check (With Signal Reversal Support)
         total_active = open_positions_count + pending_orders_count
         if total_active >= self.config.max_open_positions:
-            msg = f"⛔ REJECTED: Active pending order or open position already exists for {symbol} ({total_active} active)"
-            logger.warning(msg)
-            return {"allowed": False, "risk_multiplier": 0.0, "reason": msg}
+            # Check if this is an OPPOSITE directional signal (Signal Reversal)
+            if active_direction and signal_direction and active_direction != signal_direction:
+                msg = f"🔄 SIGNAL REVERSAL APPROVED: Active {active_direction} position will be closed -> Flipping to {signal_direction}"
+                logger.info(msg)
+                return {"allowed": True, "action": "SIGNAL_REVERSAL", "risk_multiplier": 0.75, "reason": msg}
+            else:
+                msg = f"⛔ REJECTED: Active position/order already exists in same direction ({signal_direction})"
+                logger.warning(msg)
+                return {"allowed": False, "risk_multiplier": 0.0, "reason": msg}
 
         # 3. Session Filtering Check (Avoid 13:00-16:00 UTC US Open Spikes)
         if hour in [13, 14, 15, 16]:
             msg = f"⛔ REJECTED: Restricted trading window (Hour {hour} UTC)"
             logger.warning(msg)
             return {"allowed": False, "risk_multiplier": 0.0, "reason": msg}
+
 
         # 4. Volatility Regime Risk Scaling
         if vol_rank_pct >= 80.0:

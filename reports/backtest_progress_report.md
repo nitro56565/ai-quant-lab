@@ -6,6 +6,7 @@ This document records the chronological performance evolution of the Master Inst
 
 | Run Timestamp | Net Return (%) | Net PnL ($) | Trades | Win Rate | Profit Factor | Sharpe | Max DD | **Changes Made / Notes** |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-08-10 10:05:06 | +468.53% | $+46852.77 | 2871 | 37.6% | 1.64 | 2.37 | 5.39% | Filtered weak BUY entries in Bear Regime (HMM State 0) |
 | 2026-08-06 11:47:31 | +432.58% | $+43257.58 | 2861 | 37.3% | 1.61 | 2.29 | 5.76% | Plan 2: Execution Assumption Audit Specification |
 | 2026-08-06 11:42:16 | +402.06% | $+40205.69 | 2876 | 37.4% | 1.57 | 2.23 | 5.76% | Plan 1: Empirically Calibrated Live Execution Engine |
 | 2026-08-06 11:01:30 | +828.88% | $+82888.14 | 2900 | 37.6% | 1.84 | 2.98 | 5.05% | Fully Updated Certified System Stack |
@@ -894,6 +895,73 @@ This document records the chronological performance evolution of the Master Inst
   - **Bear Trend Regime (State 0)**: `$+5494.93`
   - **Range / Low Vol Regime (State 1)**: `$+3482.86`
   - **Bull Trend Regime (State 2)**: `$+34279.79`
+
+### 5. 📊 Machine Learning Model Health & Calibration
+- **Expected Calibration Error (ECE)**: `0.0354 (3.54%)`
+- **Population Stability Index (PSI)**: `0.195 (Moderate Drift)`
+- **Conformal Prediction Coverage**: `90.0% Empirical Interval Coverage`
+- **Ensemble Disagreement Variance**: Low (LightGBM & CatBoost Agreement > 88%)
+
+### 6. 📊 Execution Parity & Microstructure Variables
+- **Fixed Transaction Cost Drag**: 1.5 pips / trade ($15.00 / lot)
+- **Realized Execution Slippage**: 0.0 pips (Backtest Baseline)
+- **Order Rejection Rate**: 0.0%
+- **Capacity Constraints / Max Size**: $10,000,000+ Account Capacity
+
+### 7. 📊 Operational Infrastructure Parameters
+- **Data Pipeline Integrity**: 100% (49,000 Clean H1 Candles)
+- **System Recovery Time**: Instant (< 0.1s Cache Restore)
+- **Research-to-Production Parity**: 100% Semantic Parity
+
+
+---
+
+## 🏃 Run Diagnostic Details: `2026-08-10 10:05:06`
+> 📝 **Changes Made**: Filtered weak BUY entries in Bear Regime (HMM State 0)
+
+### 1. 📊 Statistical Rigor & Overfitting Diagnostics
+- **Probabilistic Sharpe Ratio (PSR)**: `1.0000`
+- **Deflated Sharpe Ratio (DSR)**: `0.9988`
+- **Minimum Track Record Length (MinTRL)**: `4 Days (0.0 Years)`
+- **CPCV Validation Engine Status**: 15 Purged & Embargoed Combinatorial Paths
+- **Degrees of Freedom (df)**: `48896` (N = 49000, Features = 104)
+
+### 2. 📊 Risk, Return, & Drawdown Profile
+- **Total Executed Trades**: `2871`
+- **Win Rate (Hit Ratio)**: `37.6%`
+- **Compound Annual Growth Rate (CAGR)**: `+24.27%`
+- **Cumulative Net Return**: `+468.53% ($+46852.77)`
+- **Expected Value (EV) per Trade**: `+4.69 pips ($+16.32)`
+- **Profit Factor (PF)**: `1.64`
+- **Avg Reward-to-Risk Ratio (R:R)**: `2.63`
+- **Sharpe Ratio**: `2.37`
+- **Sortino Ratio (Downside Risk)**: `4.55`
+- **Calmar / MAR Ratio**: `4.51`
+- **Max Peak-to-Trough Drawdown (MDD)**: `5.39%`
+- **Max Drawdown Duration**: `2232.0 Hours (93.0 Days)`
+- **CVaR 95%**: `0.45%`
+- **Daily Return Skewness**: `1.61` | **Kurtosis**: `8.70`
+
+### 3. 📅 Year-over-Year (YoY) Performance Matrix
+| Year | Return (%) | Net PnL ($) | Max DD (%) | Trades | Win Rate (%) | Profit Factor |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2018 | +16.55% | $+1655.48 | 5.39% | 223 | 34.1% | 1.49 |
+| 2019 | +11.43% | $+1331.73 | 3.32% | 413 | 38.7% | 1.20 |
+| 2020 | +13.09% | $+1699.41 | 3.67% | 278 | 32.4% | 1.34 |
+| 2021 | +20.24% | $+2973.12 | 2.95% | 476 | 35.3% | 1.32 |
+| 2022 | +46.22% | $+8161.94 | 3.39% | 509 | 38.3% | 1.72 |
+| 2023 | +32.52% | $+8396.68 | 4.06% | 414 | 38.6% | 1.63 |
+| 2024 | +28.68% | $+9812.41 | 1.93% | 298 | 43.6% | 1.85 |
+| 2025 | +29.12% | $+12822.00 | 2.03% | 260 | 38.8% | 1.99 |
+
+### 4. 📊 Regime Robustness & Consistency
+- **Single-Period Profit Concentration**: `27.4%`
+- **Capital Preservation Years**: None (Active Multi-Year Execution)
+- **Regime-Segmented PnL Breakdown**:
+
+  - **Bear Trend Regime (State 0)**: `$+5896.59`
+  - **Range / Low Vol Regime (State 1)**: `$+4434.04`
+  - **Bull Trend Regime (State 2)**: `$+36522.14`
 
 ### 5. 📊 Machine Learning Model Health & Calibration
 - **Expected Calibration Error (ECE)**: `0.0354 (3.54%)`

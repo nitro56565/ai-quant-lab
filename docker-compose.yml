@@ -16,15 +16,18 @@ services:
 
     volumes:
       - ./live_trading_engine:/app/live_trading_engine
+      - ./ai_engine:/app/ai_engine
       - ./scripts:/app/scripts
       - ./backend:/app/backend
       - ./models:/app/models
       - ./execution_engine:/app/execution_engine
       - ./research_engine:/app/research_engine
       - ./strategy_engine:/app/strategy_engine
+      - ./Advance ML Combination and Permutation Test:/app/Advance ML Combination and Permutation Test
       - ./sample_data_test_records:/app/sample_data_test_records
       - ./market_data_pipeline/output:/app/market_data_pipeline/output
       - ./reports:/app/reports
+
 
     command: python3 scripts/run_paper_trading.py
 

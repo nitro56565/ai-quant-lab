@@ -110,22 +110,27 @@ class OrderManager:
                     "entry_dt": current_time,
                     "entry_price": round(fill_price, 5),
                     "stop_loss": ord['stop_loss'],
+                    "initial_stop_loss": ord['stop_loss'],
                     "take_profit": ord['take_profit'],
                     "risk_pct": ord['risk_pct'],
-                    "lots": 1.0 # Base 1 Lot
+                    "lots": 1.0, # Base 1 Lot
+                    "atr": ord.get('atr', 0.0012),
+                    "trail_activated": False
                 }
+
                 self.open_positions.append(pos)
                 self.db.remove_pending_order(ord['order_id'])
                 self.db.save_open_position(pos)
                 logger.info(f"🟢 ORDER FILLED: Position {pos['position_id']} OPENED | {ord['symbol']} {ord['signal_type']} @ {fill_price:.5f}")
             elif is_weekend:
-                self.db.remove_pending_order(ord['order_id'])
+                self.db.cancel_pending_order(ord['order_id'], "CANCELLED_WEEKEND")
                 logger.info(f"🧹 Order {ord['order_id']} CANCELLED for Weekend Market Closure (Weekend Gap Protection).")
             elif age_hours < ord['expiry_hours']:
                 remaining_pending.append(ord)
             else:
-                self.db.remove_pending_order(ord['order_id'])
+                self.db.cancel_pending_order(ord['order_id'], "EXPIRED")
                 logger.info(f"⏳ Order {ord['order_id']} EXPIRED after 3 hours without fill.")
+
 
         self.pending_orders = remaining_pending
 
@@ -141,10 +146,41 @@ class OrderManager:
             pnl_pips = 0.0
             close_reason = None
             exit_price = 0.0
+            
+            # 50% Partial Exit Logic at +1.5R Floating Profit (Phase 1 & 2 Champion)
+            pos_atr = pos.get('atr', 0.0012)
+            init_sl = pos.get('initial_stop_loss', pos['stop_loss'])
+            sl_dist_pips = abs(pos['entry_price'] - init_sl) / self.config.pip_size
 
             if pos['type'] == 'BUY':
+                floating_pips = (ask - pos['entry_price']) / self.config.pip_size
+                r_floating = floating_pips / sl_dist_pips if sl_dist_pips > 0 else 0.0
+                
+                # Check 50% Partial Exit
+                if not pos.get('partial_taken', False) and r_floating >= 1.5:
+                    initial_lots = pos.get('lots', 1.0)
+                    partial_lots = initial_lots * 0.5
+                    pos['lots'] = initial_lots * 0.5
+                    pos['partial_taken'] = True
+                    
+                    partial_pips = sl_dist_pips * 1.5
+                    partial_gross = partial_pips * (partial_lots * 10.0)
+                    partial_comm = self.config.commission_per_lot * partial_lots
+                    partial_net = partial_gross - partial_comm
+                    pos['partial_pnl_usd'] = pos.get('partial_pnl_usd', 0.0) + partial_net
+                    logger.info(f"💰 PARTIAL EXIT EXECUTED [BUY 50% @ +1.5R]: {pos['position_id']} Locked in +{partial_pips:.1f} pips (${partial_net:+.2f} USD). Remaining 50% running to original TP.")
+
+                # Delayed ATR Trailing Logic (+2.0R Floating Profit Activation)
+                if r_floating >= 2.0:
+                    pos['trail_activated'] = True
+                    trail_dist = pos_atr * 1.5
+                    new_sl = ask - trail_dist
+                    if new_sl > pos['stop_loss']:
+                        logger.info(f"🚀 DELAYED ATR TRAILING UPDATED [BUY]: {pos['position_id']} SL moved from {pos['stop_loss']:.5f} -> {new_sl:.5f} (Floating: +{r_floating:.2f}R)")
+                        pos['stop_loss'] = round(new_sl, 5)
+
                 if bid <= pos['stop_loss']:
-                    close_reason = 'STOP_LOSS'
+                    close_reason = 'TRAILING_STOP' if pos.get('trail_activated') else 'STOP_LOSS'
                     exit_price = pos['stop_loss'] - (self.config.slippage_pips * self.config.pip_size)
                     pnl_pips = (exit_price - pos['entry_price']) / self.config.pip_size
                 elif ask >= pos['take_profit']:
@@ -156,8 +192,34 @@ class OrderManager:
                     exit_price = bid
                     pnl_pips = (exit_price - pos['entry_price']) / self.config.pip_size
             else: # SELL
+                floating_pips = (pos['entry_price'] - bid) / self.config.pip_size
+                r_floating = floating_pips / sl_dist_pips if sl_dist_pips > 0 else 0.0
+                
+                # Check 50% Partial Exit
+                if not pos.get('partial_taken', False) and r_floating >= 1.5:
+                    initial_lots = pos.get('lots', 1.0)
+                    partial_lots = initial_lots * 0.5
+                    pos['lots'] = initial_lots * 0.5
+                    pos['partial_taken'] = True
+
+                    partial_pips = sl_dist_pips * 1.5
+                    partial_gross = partial_pips * (partial_lots * 10.0)
+                    partial_comm = self.config.commission_per_lot * partial_lots
+                    partial_net = partial_gross - partial_comm
+                    pos['partial_pnl_usd'] = pos.get('partial_pnl_usd', 0.0) + partial_net
+                    logger.info(f"💰 PARTIAL EXIT EXECUTED [SELL 50% @ +1.5R]: {pos['position_id']} Locked in +{partial_pips:.1f} pips (${partial_net:+.2f} USD). Remaining 50% running to original TP.")
+
+                # Delayed ATR Trailing Logic (+2.0R Floating Profit Activation)
+                if r_floating >= 2.0:
+                    pos['trail_activated'] = True
+                    trail_dist = pos_atr * 1.5
+                    new_sl = bid + trail_dist
+                    if new_sl < pos['stop_loss']:
+                        logger.info(f"🚀 DELAYED ATR TRAILING UPDATED [SELL]: {pos['position_id']} SL moved from {pos['stop_loss']:.5f} -> {new_sl:.5f} (Floating: +{r_floating:.2f}R)")
+                        pos['stop_loss'] = round(new_sl, 5)
+
                 if ask >= pos['stop_loss']:
-                    close_reason = 'STOP_LOSS'
+                    close_reason = 'TRAILING_STOP' if pos.get('trail_activated') else 'STOP_LOSS'
                     exit_price = pos['stop_loss'] + (self.config.slippage_pips * self.config.pip_size)
                     pnl_pips = (pos['entry_price'] - exit_price) / self.config.pip_size
                 elif bid <= pos['take_profit']:
@@ -169,10 +231,24 @@ class OrderManager:
                     exit_price = ask
                     pnl_pips = (pos['entry_price'] - exit_price) / self.config.pip_size
 
+            # Exness Standard Account Overnight Rollover Swap Accounting (21:00 UTC / 00:00 Server Time)
+            curr_date_str = current_time.strftime("%Y-%m-%d")
+            if current_time.hour == 21 and pos.get('last_swap_date') != curr_date_str:
+                night_mult = 3.0 if current_time.weekday() == 2 else 1.0  # Wednesday 3x Triple Swap
+                base_swap_pip = -0.62 if pos['type'] == 'BUY' else +0.15
+                swap_cost_usd = (base_swap_pip * night_mult) * (pos['lots'] * 10.0)
+                pos['accumulated_swap_usd'] = pos.get('accumulated_swap_usd', 0.0) + swap_cost_usd
+                pos['last_swap_date'] = curr_date_str
+                logger.info(f"🌙 EXNESS OVERNIGHT SWAP APPLIED [{pos['type']}]: {pos['position_id']} Charged ${swap_cost_usd:+.2f} USD (Total Swap: ${pos['accumulated_swap_usd']:+.2f} USD)")
+
             if close_reason:
-                pnl_usd = (pnl_pips * self.config.default_pip_value * pos['lots']) - self.config.commission_per_lot
+                trade_swap = pos.get('accumulated_swap_usd', 0.0)
+                partial_pnl = pos.get('partial_pnl_usd', 0.0)
+                rem_pnl = (pnl_pips * self.config.default_pip_value * pos['lots']) - self.config.commission_per_lot
+                pnl_usd = rem_pnl + partial_pnl + trade_swap
                 sl_dist = abs(pos['entry_price'] - pos['stop_loss'])
                 r_mult = pnl_pips / (sl_dist / self.config.pip_size) if sl_dist > 0 else 0.0
+
 
                 closed_trade = {
                     "position_id": pos['position_id'],
@@ -261,16 +337,62 @@ class OrderManager:
                 logger.info(f"🔴 POSITION CLOSED [{close_reason}]: {pos['position_id']} | PnL: {pnl_pips:+.2f} pips (${pnl_usd:+.2f})")
 
 
-            else:
-                remaining_positions.append(pos)
-
         self.open_positions = remaining_positions
         if newly_closed or remaining_pending != self.pending_orders:
             self.save_state()
 
         return newly_closed
 
+    def force_close_position(self, position_id: str, exit_price: float, reason: str = "SIGNAL_REVERSAL", current_time: datetime = None) -> Optional[dict]:
+        current_time = current_time or self.clock.now()
+        remaining = []
+        closed_trade = None
+        for pos in self.open_positions:
+            if pos['position_id'] == position_id:
+                pnl_pips = (exit_price - pos['entry_price']) / self.config.pip_size if pos['type'] == 'BUY' else (pos['entry_price'] - exit_price) / self.config.pip_size
+                pnl_usd = (pnl_pips * self.config.default_pip_value * pos['lots']) - self.config.commission_per_lot
+                sl_dist = abs(pos['entry_price'] - pos['stop_loss'])
+                r_mult = pnl_pips / (sl_dist / self.config.pip_size) if sl_dist > 0 else 0.0
+
+                closed_trade = {
+                    "position_id": pos['position_id'],
+                    "symbol": pos['symbol'],
+                    "type": pos['type'],
+                    "entry_time": pos['entry_time'],
+                    "exit_time": current_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                    "entry_price": pos['entry_price'],
+                    "exit_price": round(exit_price, 5),
+                    "pnl_pips": round(pnl_pips, 2),
+                    "pnl_usd": round(pnl_usd, 2),
+                    "reason": reason,
+                    "r_multiple": round(r_mult, 2)
+                }
+
+                self.db.insert_trade({
+                    "trade_id": pos['position_id'],
+                    "timestamp": current_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                    "symbol": pos['symbol'],
+                    "direction": pos['type'],
+                    "order_type": "LIMIT_RETRACE",
+                    "requested_entry": pos['entry_price'],
+                    "filled_entry": pos['entry_price'],
+                    "exit_price": round(exit_price, 5),
+                    "pnl_usd": round(pnl_usd, 2),
+                    "pnl_pips": round(pnl_pips, 2),
+                    "reason_exited": reason,
+                    "actual_broker_trade_log": {"status": "CLOSED_VIA_REVERSAL"}
+                })
+                self.closed_trades.append(closed_trade)
+                self.db.remove_open_position(pos['position_id'])
+                logger.info(f"🔴 POSITION FORCED CLOSED [{reason}]: {pos['position_id']} | PnL: {pnl_pips:+.2f} pips (${pnl_usd:+.2f})")
+            else:
+                remaining.append(pos)
+        self.open_positions = remaining
+        self.save_state()
+        return closed_trade
+
     def save_state(self):
+
         # Convert datetimes to string for JSON serialization
         def serializable(obj):
             if isinstance(obj, list):

@@ -9,8 +9,9 @@ import numpy as np
 import pandas as pd
 import logging
 from research_engine.feature_matrix import FeatureMatrixBuilder
-from ai_engine.ensemble import LightGBMCatBoostEnsemble
+from ai_engine.ensemble import LightGBMCatBoostEnsemble, RegimeFusedEnsemble
 from live_trading_engine.event_bus import EventBus, Event, EventType
+
 
 logger = logging.getLogger(__name__)
 
@@ -134,13 +135,36 @@ class SignalEngine:
         df_feat[feat_cols] = df_feat[feat_cols].bfill().ffill().fillna(0.0)
         latest_row = df_feat.iloc[[-1]][feat_cols]
 
-        preds = self.ensemble.predict(latest_row)
-        prob_long = float(preds['prob_long'][0])
-        prob_short = float(preds['prob_short'][0])
-        mfe_long = float(preds['mfe_50_long'][0])
-        mfe_short = float(preds['mfe_50_short'][0])
-        mae_long = float(preds['mae_50_long'][0])
-        mae_short = float(preds['mae_50_short'][0])
+        if isinstance(self.ensemble, dict) and self.ensemble.get("architecture") == "NineStateRegimeEnsemble":
+            hmm_det = self.ensemble["hmm_detector"]
+            hmm_state = int(hmm_det.predict(df_feat.iloc[[-1]])[0])
+            vol_pct = float(df_feat['feat_vol_atr_pct'].iloc[-1])
+            v_st = 0
+            if vol_pct >= self.ensemble.get("vol_low_thresh", 33.33):
+                v_st = 1
+            if vol_pct >= self.ensemble.get("vol_high_thresh", 66.67):
+                v_st = 2
+            regime_9 = (hmm_state * 3) + v_st
+
+            m_l = self.ensemble["models_long"].get(regime_9)
+            m_s = self.ensemble["models_short"].get(regime_9)
+
+            if m_l and m_s:
+                prob_long = float(m_l.predict_proba(latest_row.values)[:, 1][0])
+                prob_short = float(m_s.predict_proba(latest_row.values)[:, 1][0])
+            else:
+                prob_long, prob_short = 0.30, 0.30
+
+            mfe_long, mfe_short = 25.0, 25.0
+            mae_long, mae_short = 15.0, 15.0
+        else:
+            preds = self.ensemble.predict(latest_row)
+            prob_long = float(preds['prob_long'][0])
+            prob_short = float(preds['prob_short'][0])
+            mfe_long = float(preds.get('mfe_50_long', [25.0])[0])
+            mfe_short = float(preds.get('mfe_50_short', [25.0])[0])
+            mae_long = float(preds.get('mae_50_long', [15.0])[0])
+            mae_short = float(preds.get('mae_50_short', [15.0])[0])
 
         latest_atr = float(df_feat['feat_vol_atr'].iloc[-1])
         vol_rank = float(df_feat['feat_vol_atr_pct'].iloc[-1])
@@ -162,6 +186,7 @@ class SignalEngine:
             "ask": event.data.get("ask"),
             "bid": event.data.get("bid")
         }
+
 
         # Publish MODEL_PREDICTION and SIGNAL_GENERATED events to Event Bus
         self.event_bus.publish(Event(EventType.MODEL_PREDICTION, pred_event_data))

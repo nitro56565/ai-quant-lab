@@ -87,8 +87,16 @@ def main():
 
         now_dt = datetime.now(timezone.utc)
         equity = broker.get_account_summary()["equity"]
-        open_pos_count = len(order_manager.open_positions)
-        pending_orders_count = len(order_manager.pending_orders)
+        open_pos = order_manager.open_positions
+        pending_ords = order_manager.pending_orders
+        open_pos_count = len(open_pos)
+        pending_orders_count = len(pending_ords)
+        
+        active_direction = None
+        if open_pos:
+            active_direction = open_pos[0].get("type") or open_pos[0].get("direction")
+        elif pending_ords:
+            active_direction = pending_ords[0].get("type") or pending_ords[0].get("direction")
 
         # Pre-Trade Risk Audit
         risk_res = risk_guardian.evaluate_entry_risk(
@@ -97,15 +105,30 @@ def main():
             open_positions_count=open_pos_count,
             pending_orders_count=pending_orders_count,
             current_time=now_dt,
-            vol_rank_pct=50.0
+            vol_rank_pct=50.0,
+            signal_direction=direction,
+            active_direction=active_direction
         )
-
 
         if not risk_res["allowed"]:
             reason = risk_res["reason"]
             logger.warning(f"🛡️ Pre-Trade Risk Guardian VETOED Order: {reason}")
             event_bus.publish(Event(EventType.RISK_VETOED, {"reason": reason, "symbol": symbol, "direction": direction}))
             return
+
+        # Handle Signal Reversal Protocol
+        if risk_res.get("action") == "SIGNAL_REVERSAL":
+            logger.info(f"🔄 SIGNAL REVERSAL PROTOCOL TRIGGERED: Closing active {active_direction} position to flip into {direction}")
+            # Cancel pending orders
+            order_manager.pending_orders.clear()
+            
+            # Force close active position at current market price
+            for pos in list(order_manager.open_positions):
+                close_price = bid if active_direction == "BUY" else ask
+                order_manager.force_close_position(pos["position_id"], exit_price=close_price, reason="SIGNAL_REVERSAL", current_time=now_dt)
+                logger.info(f"📉 SIGNAL REVERSAL EXIT: Position {pos['position_id']} closed @ {close_price:.5f}")
+
+
 
         # Place Paper Order
         order = broker.place_order(
@@ -130,6 +153,7 @@ def main():
     signal_engine.warmup_model(streamer.full_df)
 
     eval_bar_count = 0
+    last_evaluated_h1_ts = None
     print(f"[{format_ist_utc()}] 🟢 Daemon fully initialized with live OANDA stream. Entering live tick evaluation loop...\n")
 
     while True:
@@ -144,7 +168,7 @@ def main():
                 logger.info(f"📉 POSITION CLOSED: {t.get('position_id')} | PnL: ${t.get('pnl_usd'):+.2f} ({t.get('r_multiple'):+.2f}R)")
                 event_bus.publish(Event(EventType.POSITION_CLOSED, t))
 
-            # Emit tick update to EventBus
+            # Emit tick update to EventBus (Every Tick/Minute)
             event_bus.publish(Event(EventType.TICK_UPDATE, {
                 "timestamp": utc_ts_str,
                 "symbol": "EURUSD",
@@ -153,22 +177,28 @@ def main():
                 "rolling_bars_df": rolling_df
             }))
 
-            # Evaluate Bar Close
-            event_bus.publish(Event(EventType.BAR_CLOSED, {
-                "timestamp": utc_ts_str,
-                "symbol": "EURUSD",
-                "ask": ask,
-                "bid": bid,
-                "rolling_bars_df": rolling_df
-            }))
+            # H1 Candle Close Guard: Fire ML Inference ONCE per H1 candle completion
+            current_h1_ts = curr_time.strftime("%Y-%m-%d %H:00") if hasattr(curr_time, "strftime") else str(curr_time)[:13]
+            if last_evaluated_h1_ts is None or current_h1_ts > last_evaluated_h1_ts:
+                last_evaluated_h1_ts = current_h1_ts
+                logger.info(f"⏰ NEW H1 CANDLE COMPLETED ({current_h1_ts} UTC) — Triggering ML Feature Extraction & Signal Inference...")
+                
+                event_bus.publish(Event(EventType.BAR_CLOSED, {
+                    "timestamp": utc_ts_str,
+                    "symbol": "EURUSD",
+                    "ask": ask,
+                    "bid": bid,
+                    "rolling_bars_df": rolling_df
+                }))
 
             summary = broker.get_account_summary()
-            logger.info(f"{format_ist_utc()}] 🟢 Live Bar #{eval_bar_count} Evaluated | Ask: {ask:.5f} | Bid: {bid:.5f} | Equity: ${summary['equity']:,.2f} | Open Pos: {summary['open_positions_count']} | Closed: {summary['closed_trades_count']}")
+            logger.info(f"{format_ist_utc()}] 🟢 Live Tick #{eval_bar_count} | Ask: {ask:.5f} | Bid: {bid:.5f} | Equity: ${summary['equity']:,.2f} | Open Pos: {summary['open_positions_count']} | Closed: {summary['closed_trades_count']}")
             
         except Exception as e:
             logger.error(f"{format_ist_utc()}] ⚠️ Live Bar Loop Exception: {e}")
             
         time.sleep(60.0)
+
 
 if __name__ == "__main__":
     main()

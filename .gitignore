@@ -19,3 +19,5 @@ market_data_pipeline/metadata/
 .idea/
 
 .env
+
+.venv

@@ -39,7 +39,8 @@ def reset_system():
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
-            tables = ["trades_ledger", "decision_trace", "candle_ledger", "notification_ledger"]
+            tables = ["trades_ledger", "decision_trace", "candle_ledger", "notification_ledger", "pending_orders", "open_positions"]
+
             for tbl in tables:
                 try:
                     cursor.execute(f"DELETE FROM {tbl};")

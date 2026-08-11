@@ -560,16 +560,24 @@ class DatabaseManager:
         finally:
             session.close()
 
-    def remove_pending_order(self, order_id: str):
+    def update_order_status(self, order_id: str, new_status: str):
         session = self.SessionLocal()
         try:
-            session.query(PendingOrderLedger).filter(PendingOrderLedger.order_id == order_id).delete()
-            session.commit()
+            entry = session.query(PendingOrderLedger).filter(PendingOrderLedger.order_id == order_id).first()
+            if entry:
+                entry.status = new_status
+                session.commit()
         except Exception as e:
             session.rollback()
-            logger.error(f"Error removing pending order from database: {e}")
+            logger.error(f"Error updating order status in database: {e}")
         finally:
             session.close()
+
+    def remove_pending_order(self, order_id: str):
+        self.update_order_status(order_id, "FILLED")
+
+    def cancel_pending_order(self, order_id: str, reason: str = "CANCELLED"):
+        self.update_order_status(order_id, reason)
 
     def clear_all_pending_orders(self):
         session = self.SessionLocal()
@@ -582,10 +590,10 @@ class DatabaseManager:
         finally:
             session.close()
 
-    def get_active_pending_orders(self) -> List[Dict[str, Any]]:
+    def get_all_orders_ledger(self) -> List[Dict[str, Any]]:
         session = self.SessionLocal()
         try:
-            records = session.query(PendingOrderLedger).all()
+            records = session.query(PendingOrderLedger).order_by(PendingOrderLedger.created_time_dt.desc()).all()
             res = []
             for r in records:
                 res.append({
@@ -594,7 +602,7 @@ class DatabaseManager:
                     "signal_type": r.signal_type,
                     "status": r.status,
                     "signal_time": r.signal_time,
-                    "created_time_dt": r.created_time_dt,
+                    "created_time_dt": r.created_time_dt.strftime("%Y-%m-%d %H:%M:%S UTC") if r.created_time_dt else r.signal_time,
                     "limit_price": r.limit_price,
                     "stop_loss": r.stop_loss,
                     "take_profit": r.take_profit,
@@ -605,6 +613,31 @@ class DatabaseManager:
             return res
         finally:
             session.close()
+
+    def get_active_pending_orders(self) -> List[Dict[str, Any]]:
+        session = self.SessionLocal()
+        try:
+            records = session.query(PendingOrderLedger).filter(PendingOrderLedger.status == "PENDING_LIMIT").all()
+            res = []
+            for r in records:
+                res.append({
+                    "order_id": r.order_id,
+                    "symbol": r.symbol,
+                    "signal_type": r.signal_type,
+                    "status": r.status,
+                    "signal_time": r.signal_time,
+                    "created_time_dt": r.created_time_dt.strftime("%Y-%m-%d %H:%M:%S UTC") if r.created_time_dt else r.signal_time,
+                    "limit_price": r.limit_price,
+                    "stop_loss": r.stop_loss,
+                    "take_profit": r.take_profit,
+                    "risk_pct": r.risk_pct,
+                    "atr": r.atr,
+                    "expiry_hours": r.expiry_hours
+                })
+            return res
+        finally:
+            session.close()
+
 
     def save_open_position(self, pos_dict: Dict[str, Any]):
         session = self.SessionLocal()

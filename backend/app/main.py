@@ -108,17 +108,21 @@ def get_trades(limit: int = 500):
     return {"status": "SUCCESS", "count": len(trades), "trades": trades[-limit:]}
 
 @app.get("/api/v2/orders/pending")
-def get_pending_orders():
+def get_pending_orders(all_orders: bool = Query(False)):
     """
-    Pending Limit Orders API:
-    Queries SQLite Single Source of Truth (institutional_ledger.db) directly for active pending limit orders.
+    Pending & Order History Ledger API:
+    Queries SQLite Single Source of Truth (institutional_ledger.db) directly for active pending limit orders or all order history.
     """
     try:
-        orders = db_manager.get_active_pending_orders()
+        if all_orders:
+            orders = db_manager.get_all_orders_ledger()
+        else:
+            orders = db_manager.get_active_pending_orders()
         return {"status": "SUCCESS", "count": len(orders), "pending_orders": orders}
     except Exception as e:
         logger.error(f"Error querying pending orders from SQLite: {e}")
         return {"status": "SUCCESS", "count": 0, "pending_orders": []}
+
 
 
 
