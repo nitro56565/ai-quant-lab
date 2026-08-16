@@ -1,13 +1,13 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'market_data_pipeline')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'realtime_market_streaming')))
 
 import unittest
 import pandas as pd
 import numpy as np
-from market_data_pipeline.data_validator import DataValidatorEngine
-from market_data_pipeline.tick_resampler import TickResamplerEngine
+from realtime_market_streaming.data_validator import DataValidatorEngine
+from realtime_market_streaming.tick_resampler import TickResamplerEngine
 
 class TestDukascopyPipeline(unittest.TestCase):
     def setUp(self):

@@ -1,0 +1,7 @@
+{
+  "symbol": "USDCHF",
+  "asset_type": "forex",
+  "quote_currency": "CHF",
+  "base_currency": "USD",
+  "pip_size": 0.0001
+}

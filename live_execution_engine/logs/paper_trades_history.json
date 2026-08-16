@@ -1,0 +1,12 @@
+[
+  {
+    "position_id": "POS_46",
+    "symbol": "EURUSD",
+    "type": "SELL",
+    "direction": "SELL",
+    "entry_price": 1.15362,
+    "lots": 0.42,
+    "oanda_trade_id": "46",
+    "source": "BROKER_AUTHORITATIVE_FILL",
+    "entry_time": "2026-08-13 19:11:31 UTC",
+    "entry_dt": 

@@ -5,11 +5,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import unittest
 import pandas as pd
 import numpy as np
-from data_loader import DataLoader
+from historical_data_ingestion import DataLoader
 from strategy_engine.institutional_ai import InstitutionalAIStrategy
 from macro_engine.parser import MacroContextEngine
 from execution_engine import ExecutionEngine
-from ai_engine.feature_admission import FeatureAdmissionEngine
+from core_machine_learning.feature_admission import FeatureAdmissionEngine
 
 class TestFeatureAdmissionRule(unittest.TestCase):
     @classmethod

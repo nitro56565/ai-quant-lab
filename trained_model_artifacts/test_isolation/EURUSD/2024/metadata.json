@@ -1,0 +1,13 @@
+{
+  "symbol": "EURUSD",
+  "roll_year": 2024,
+  "train_start": "2018-01-01",
+  "train_end": "2023-12-31",
+  "feature_count": 1,
+  "feature_columns": [
+    "feat1"
+  ],
+  "best_hyperparams": {},
+  "metrics": {},
+  "git_commit": "2048eb061ecbec43c0e12977e60a31ecdc5cb4b9"
+}

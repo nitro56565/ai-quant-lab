@@ -1,0 +1,7 @@
+{
+  "symbol": "AUDUSD",
+  "asset_type": "forex",
+  "quote_currency": "USD",
+  "base_currency": "AUD",
+  "pip_size": 0.0001
+}

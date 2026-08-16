@@ -5,10 +5,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import unittest
 import numpy as np
 import pandas as pd
-from data_loader import DataLoader
+from historical_data_ingestion import DataLoader
 from strategy_engine.institutional_ai import InstitutionalAIStrategy
-from feature_engine.bvc_toxicity_proxy import BVCToxicityProxyCalculator
-from ai_engine.feature_admission import FeatureAdmissionEngine
+from core_feature_engineering.bvc_toxicity_proxy import BVCToxicityProxyCalculator
+from core_machine_learning.feature_admission import FeatureAdmissionEngine
 from execution_engine import ExecutionEngine
 
 class TestBVCToxicityCertification(unittest.TestCase):

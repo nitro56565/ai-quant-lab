@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import unittest
-from ai_engine.lgbm_suite import LightGBMModelSuite
+from core_machine_learning.lgbm_suite import LightGBMModelSuite
 
 class TestLightGBMModelSuite(unittest.TestCase):
     def setUp(self):

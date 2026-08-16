@@ -1,0 +1,7 @@
+{
+  "symbol": "USDJPY",
+  "asset_type": "forex",
+  "quote_currency": "JPY",
+  "base_currency": "USD",
+  "pip_size": 0.01
+}

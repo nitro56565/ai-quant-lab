@@ -1,0 +1,7 @@
+{
+  "symbol": "GBPUSD",
+  "asset_type": "forex",
+  "quote_currency": "USD",
+  "base_currency": "GBP",
+  "pip_size": 0.0001
+}

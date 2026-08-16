@@ -1,4 +1,4 @@
-# 🚀 AI Quant Lab - Master Certified Production Engine (`TRIPLE_STACKING_ENSEMBLE_V1`)
+# 🚀 AI Quant Lab - Master Certified Production Engine (`TRIPLE_STACKING_ENSEMBLE_v3.2`)
 
 Welcome to **AI Quant Lab**, an institutional-grade, multi-regime quantitative machine learning framework for automated foreign exchange (FX) trading.
 
@@ -6,9 +6,9 @@ Welcome to **AI Quant Lab**, an institutional-grade, multi-regime quantitative m
 
 ## 🏛️ Master Certified Production Architecture
 
-```
+```text
                           ┌────────────────────────────────────────────────────────┐
-                          │   MASTER CERTIFIED PRODUCTION ARCHITECTURE (V16.0)     │
+                          │   MASTER CERTIFIED PRODUCTION ARCHITECTURE (v3.2)      │
                           └────────────────────────────────────────────────────────┘
                                                        │
          ┌─────────────────────────────────────────────┼─────────────────────────────────────────────┐
@@ -16,20 +16,19 @@ Welcome to **AI Quant Lab**, an institutional-grade, multi-regime quantitative m
  ┌───────────────┐                             ┌───────────────┐                             ┌───────────────┐
  │ FEATURE MATRIX│                             │ REGIME ENGINE │                             │ MODEL ENSEMBLE│
  ├───────────────┤                             ├───────────────┤                             ├───────────────┤
- │ 14 Technical  │                             │ 9 Discretized │                             │ Equal Weight  │
- │ Indicators    │                             │ Regimes (3 HMM│                             │ Triple Stack  │
- │ (RSI, ATR, BB │                             │  Directional  │                             │ (LGBM 33.33%  │
- │ ADX, MACD)    │                             │  x 3 Vol-Rank)│                             │  Cat  33.33%  │
- └───────────────┘                             └───────────────┘                             │  XGB  33.33%) │
+ │ 70+ Technical │                             │ 4 Discretized │                             │ Weighted      │
+ │ Indicators    │                             │ Regimes (2 HMM│                             │ Triple Stack  │
+ │ (RSI, ATR, BB │                             │  Directional  │                             │ (Cat  50%     │
+ │ ADX, MACD)    │                             │  x 2 Vol-Rank)│                             │  LGBM 25%     │
+ └───────────────┘                             └───────────────┘                             │  XGB  25%)    │
                                                        │                                     └───────────────┘
                                                        ▼                                             │
                                                ┌───────────────┐                                     │
                                                │ PROBABILITY   │◄────────────────────────────────────┘
                                                │ THRESHOLDS    │
                                                ├───────────────┤
-                                               │ Raw Prob.     │
-                                               │ P >= 0.42 (R1)│
-                                               │ P >= 0.36(0/2)│
+                                               │ Range: P>=0.42│
+                                               │ Trend: P>=0.38│
                                                └───────────────┘
                                                        │
                                                        ▼
@@ -48,11 +47,11 @@ Welcome to **AI Quant Lab**, an institutional-grade, multi-regime quantitative m
 
 ```text
 ai-quant-lab/
-├── ai_engine/                                # Directional HMM Regime Detector & ML Stacking Engine
-├── data_loader/                              # High-performance Parquet Multi-Timeframe Data Loader
+├── core_machine_learning/                                # Directional HMM Regime Detector & ML Stacking Engine
+├── historical_data_ingestion/                              # High-performance Parquet Multi-Timeframe Data Loader
 ├── execution_engine/                         # Limit Retrace Entry, Partial Exit & Order Management Engine
-├── market_data_pipeline/                     # Multi-Asset Data Ingestion, HistData Parser & Storage
-├── research_engine/                          # 14 Technical Feature Matrix Builder & Triple Barrier Labeler
+├── realtime_market_streaming/                     # Multi-Asset Data Ingestion, HistData Parser & Storage
+├── research_and_training_engine/                          # 14 Technical Feature Matrix Builder & Triple Barrier Labeler
 ├── position_sizer/                           # Risk-Adjusted Dynamic Volatility Lot Size Calculator
 ├── risk_engine/                              # Portfolio Risk & Drawdown Limit Control
 │
@@ -95,23 +94,25 @@ ai-quant-lab/
 
 ---
 
-## 🏆 Key Master Backtest Results (EURUSD 0.75% Risk Allocation)
+## 🏆 Frozen Master Canonical Production Benchmark (EURUSD 0.75% Risk Allocation)
 
-* **8-Year Walk-Forward OOS Gauntlet (2018–2025 EURUSD H1)**:
-  - Starting Capital: **$10,000.00** $\longrightarrow$ Ending Equity: **$102,724.83** (**+927.25% Cumulative Net Return**)
-  - **Annualized Sharpe Ratio**: **6.67**
-  - **Max Drawdown (MDD)**: **14.54%**
-  - **Profit Factor (PF)**: **1.15**
-  - **Win Rate**: **52.51%** (4,020 trades)
+* **MASTER CANONICAL PRODUCTION BACKTEST — v3.2 (FROZEN 🔒)**:
+  - **8-Year Walk-Forward OOS Gauntlet (2018–2025 EURUSD H1)**:
+    - **CAGR**: **+66.71%**
+    - **Daily Sharpe Ratio ($\sqrt{252}$)**: **2.12**
+    - **Daily Mark-to-Market MDD**: **22.34%**
+    - **Profit Factor (PF)**: **1.72**
+    - **Trades**: 2,458 completed trades
 
-* **100% Untouched Live 2026 Holdout Verification (Jan 1 – Aug 11, 2026)**:
-  - Starting Capital: **$10,000.00** $\longrightarrow$ Ending Equity: **$13,499.07** (**+34.99% Net Return in 7.5 months**)
-  - **2026 Sharpe Ratio**: **14.33**
-  - **2026 Max Drawdown**: **4.99%**
-  - **2026 Profit Factor**: **1.51** (234 trades)
+  - **100% Untouched Live 2026 Holdout Verification (Jan 1 – Aug 11, 2026)**:
+    - **Return**: **+59.13%**
+    - **2026 Daily Sharpe Ratio ($\sqrt{252}$)**: **4.32**
+    - **2026 Mark-to-Market MDD**: **7.22%**
+    - **2026 Profit Factor**: **3.19** 
+    - **Trades**: 109 completed trades
 
 ---
 
 ## 📜 Master Approved Components Ledger
 
-For a full historical track of every single stage experiment, p-value permutation test, and user-approved component, refer to [`docs/approved_components_ledger.md`](file:///Users/mahesh.patil/Desktop/Mahesh/ai-quant-lab/docs/approved_components_ledger.md).
+For a full historical track of every single stage experiment, p-value permutation test, and user-approved component, refer to [`docs/approved_components_ledger.md`](file:///Users/mahesh.patil/Desktop/Mahesh/ai-quant-lab/documentation_and_ledgers/approved_components_ledger.md).

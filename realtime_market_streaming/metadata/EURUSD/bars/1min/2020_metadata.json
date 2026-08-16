@@ -1,0 +1,8 @@
+{
+  "symbol": "EURUSD",
+  "year": 2020,
+  "timeframe": "1min",
+  "rows": 525600,
+  "start": "2020-01-01",
+  "end": "2020-12-31"
+}

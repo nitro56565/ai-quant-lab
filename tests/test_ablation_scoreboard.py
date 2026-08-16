@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import unittest
 from scripts.run_master_ablation_scoreboard import run_stage_simulation
-from data_loader import DataLoader
+from historical_data_ingestion import DataLoader
 from strategy_engine.institutional_ai import InstitutionalAIStrategy
 import numpy as np
 

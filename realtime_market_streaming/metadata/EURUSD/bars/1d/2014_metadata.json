@@ -1,0 +1,8 @@
+{
+  "symbol": "EURUSD",
+  "year": 2014,
+  "timeframe": "1d",
+  "rows": 365,
+  "start": "2014-01-01",
+  "end": "2014-12-31"
+}

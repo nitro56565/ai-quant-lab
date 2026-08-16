@@ -10,9 +10,9 @@ import tempfile
 import sqlite3
 from datetime import datetime, timezone
 
-from live_trading_engine.events.event_bus import EventBus, Event, EventType
-from live_trading_engine.persistence.database import DatabaseManager
-from live_trading_engine.monitoring.telegram_notifier import TelegramNotifier
+from live_execution_engine.events.event_bus import EventBus, Event, EventType
+from live_execution_engine.persistence.database import DatabaseManager
+from live_execution_engine.monitoring.telegram_notifier import TelegramNotifier
 
 class TestTelegramNotifier(unittest.TestCase):
     def setUp(self):

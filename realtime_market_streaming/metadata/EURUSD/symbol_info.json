@@ -1,0 +1,10 @@
+{
+  "symbol": "EURUSD",
+  "provider": "Dukascopy",
+  "timezone": "UTC",
+  "pip_size": 0.0001,
+  "digits": 5,
+  "asset_type": "forex",
+  "base_currency": "EUR",
+  "quote_currency": "USD"
+}

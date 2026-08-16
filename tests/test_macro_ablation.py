@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 import pandas as pd
 import unittest
-from data_loader import DataLoader
+from historical_data_ingestion import DataLoader
 from strategy_engine.institutional_ai import InstitutionalAIStrategy
 from macro_engine.parser import MacroContextEngine
 from execution_policy_engine.policy import ExecutionPolicyEngine

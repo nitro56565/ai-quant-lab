@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements and install Python dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir uvicorn fastapi
 
 # Copy codebase
 COPY . .
@@ -24,8 +23,5 @@ COPY . .
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Expose port 5006 for Institutional Paper Trading Analytics Dashboard
-EXPOSE 5006
-
-# Default command: Run Live Paper Trading Daemon & FastAPI Paper Trading Web Server on Port 5006 concurrently
-CMD ["sh", "-c", "python3 -m uvicorn backend.app.main:app --host 0.0.0.0 --port 5006 & python3 scripts/run_paper_trading.py --fast"]
+# Default command: Run Live Paper Trading Daemon
+CMD ["python3", "production_deployment/live_engine/run_paper_trading.py"]

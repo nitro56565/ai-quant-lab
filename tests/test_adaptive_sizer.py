@@ -1,5 +1,5 @@
 import unittest
-from ai_engine.adaptive_sizer import AdaptivePositionSizer
+from core_machine_learning.adaptive_sizer import AdaptivePositionSizer
 
 class TestAdaptivePositionSizer(unittest.TestCase):
     def test_risk_grid_factors(self):

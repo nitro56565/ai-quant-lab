@@ -1,0 +1,19 @@
+2026-08-12 03:30:22,996 [INFO] 🚀 Institutional Live Trading Engine v3.0 Initialized in [DEMO] Mode
+2026-08-12 03:30:22,996 [INFO] ▶ Starting Live Trading Engine Daemon (3 Candle Cycles)...
+2026-08-12 03:30:22,996 [INFO] ---------------------------------------------------------------------------------
+2026-08-12 03:30:22,996 [INFO] ▶ Ingesting H1 Candle: 2026-08-11T22:00:22.996787+00:00 | Close: 1.0861
+2026-08-12 03:30:32,355 [INFO] 🚀 Institutional Live Trading Engine v3.0 Initialized in [DEMO] Mode
+2026-08-12 03:30:32,355 [INFO] ▶ Starting Live Trading Engine Daemon (3 Candle Cycles)...
+2026-08-12 03:30:32,355 [INFO] ---------------------------------------------------------------------------------
+2026-08-12 03:30:32,355 [INFO] ▶ Ingesting H1 Candle: 2026-08-11T22:00:32.355417+00:00 | Close: 1.0861
+2026-08-12 03:30:32,356 [INFO]   🟢 TRADE EXECUTED & TELEMETRY RECORDED | Order: LIVE_ORD_1786485632 | Dir: BUY | Lots: 0.31 | Fill: 1.08580
+2026-08-12 03:30:33,361 [INFO] ---------------------------------------------------------------------------------
+2026-08-12 03:30:33,362 [INFO] ▶ Ingesting H1 Candle: 2026-08-11T22:00:33.361590+00:00 | Close: 1.0862
+2026-08-12 03:30:33,366 [INFO]   🟢 TRADE EXECUTED & TELEMETRY RECORDED | Order: LIVE_ORD_1786485633 | Dir: BUY | Lots: 0.31 | Fill: 1.08590
+2026-08-12 03:30:34,369 [INFO] ---------------------------------------------------------------------------------
+2026-08-12 03:30:34,369 [INFO] ▶ Ingesting H1 Candle: 2026-08-11T22:00:34.369488+00:00 | Close: 1.0863
+2026-08-12 03:30:34,374 [INFO]   🟢 TRADE EXECUTED & TELEMETRY RECORDED | Order: LIVE_ORD_1786485634 | Dir: BUY | Lots: 0.31 | Fill: 1.08600
+2026-08-12 03:30:35,379 [INFO] =================================================================================
+2026-08-12 03:30:35,380 [INFO]   🏆 LIVE ENGINE DAEMON ITERATION COMPLETE — ALL STAGES OPERATIONAL
+2026-08-12 03:30:35,380 [INFO] =================================================================================
+

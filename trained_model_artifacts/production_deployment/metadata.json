@@ -1,0 +1,8 @@
+{
+    "model_id": "CERTIFIED_BASELINE_V3.2_MASTER",
+    "version": "3.2.0",
+    "symbol": "EURUSD",
+    "timeframe": "1h",
+    "architecture": "FourStateRegimeEnsemble_v3 (Combo #271)",
+    "features": 63
+}

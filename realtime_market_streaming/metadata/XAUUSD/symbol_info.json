@@ -1,0 +1,15 @@
+{
+  "symbol": "XAUUSD",
+  "digits": 2,
+  "pip_size": 0.01,
+  "timeframe_supported": [
+    "1m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "1d"
+  ],
+  "data_source": "Dukascopy"
+}

@@ -8,12 +8,12 @@ import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from live_trading_engine.data.tick_logger import PartitionedTickParquetLogger
-from live_trading_engine.data.oanda_client import OANDAAsyncStreamClient
-from live_trading_engine.data.hourly_aggregator import HourlyCandleAggregator
-from live_trading_engine.data.replay_provider import ReplayProvider
-from live_trading_engine.monitoring.health import SystemHealthTree, ComponentHealthStatus
-from live_trading_engine.persistence.database import DatabaseManager
+from live_execution_engine.data.tick_logger import PartitionedTickParquetLogger
+from live_execution_engine.data.oanda_client import OANDAAsyncStreamClient
+from live_execution_engine.data.hourly_aggregator import HourlyCandleAggregator
+from live_execution_engine.data.replay_provider import ReplayProvider
+from live_execution_engine.monitoring.health import SystemHealthTree, ComponentHealthStatus
+from live_execution_engine.persistence.database import DatabaseManager
 
 class TestOANDAPipeline(unittest.TestCase):
     def test_partitioned_tick_parquet_logger(self):

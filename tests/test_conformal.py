@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from ai_engine.conformal import ConformalPredictor
+from core_machine_learning.conformal import ConformalPredictor
 
 class TestConformalPredictor(unittest.TestCase):
     def setUp(self):

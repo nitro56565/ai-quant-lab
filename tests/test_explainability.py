@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import unittest
 from lightgbm import LGBMClassifier
-from ai_engine.explainability import SignalExplainer
+from core_machine_learning.explainability import SignalExplainer
 
 class TestSignalExplainer(unittest.TestCase):
     def setUp(self):

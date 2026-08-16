@@ -11,43 +11,15 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - OANDA_BROKER_TYPE=OANDA_PRACTICE
-
-
-
     volumes:
-      - ./live_trading_engine:/app/live_trading_engine
-      - ./ai_engine:/app/ai_engine
-      - ./scripts:/app/scripts
-      - ./backend:/app/backend
-      - ./models:/app/models
-      - ./execution_engine:/app/execution_engine
-      - ./research_engine:/app/research_engine
-      - ./strategy_engine:/app/strategy_engine
-      - ./Advance ML Combination and Permutation Test:/app/Advance ML Combination and Permutation Test
-      - ./sample_data_test_records:/app/sample_data_test_records
-      - ./market_data_pipeline/output:/app/market_data_pipeline/output
-      - ./reports:/app/reports
-
-
-    command: python3 scripts/run_paper_trading.py
-
-
-  # Service 2: Institutional Paper Trading Web Dashboard Container
-  paper-trading-dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ai_quant_paper_trading_dashboard
-    restart: unless-stopped
-    ports:
-      - "5006:5006"
-    volumes:
-      - ./live_trading_engine:/app/live_trading_engine
-      - ./backend:/app/backend
-      - ./scripts:/app/scripts
-      - ./reports:/app/reports
-    depends_on:
-      - paper-trading-engine
-
-    command: python3 -m uvicorn backend.app.main:app --host 0.0.0.0 --port 5006
+      - ./live_execution_engine:/app/live_execution_engine
+      - ./core_machine_learning:/app/core_machine_learning
+      - ./core_feature_engineering:/app/core_feature_engineering
+      - ./historical_data_ingestion:/app/historical_data_ingestion
+      - ./realtime_market_streaming:/app/realtime_market_streaming
+      - ./local_data_workspace:/app/local_data_workspace
+      - ./trained_model_artifacts:/app/trained_model_artifacts
+      - ./production_deployment:/app/production_deployment
+      - ./docs:/app/docs
+    command: python3 production_deployment/live_engine/run_paper_trading.py
 

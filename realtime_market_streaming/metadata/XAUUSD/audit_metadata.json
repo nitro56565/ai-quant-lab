@@ -1,0 +1,10 @@
+{
+  "symbol": "XAUUSD",
+  "provider": "Dukascopy",
+  "timezone": "UTC",
+  "downloaded_until": "2026-08-06",
+  "total_raw_ticks": 36445956,
+  "start_time": "2019-01-01 23:00:07.151000064+00:00",
+  "end_time": "2019-12-31 21:59:57.987000064+00:00",
+  "version": "v1"
+}

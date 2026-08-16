@@ -1,0 +1,8 @@
+{
+    "symbol": "EURUSD",
+    "asset_type": "forex",
+    "base_currency": "EUR",
+    "quote_currency": "USD",
+    "pip_value": 0.0001,
+    "lot_size": 100000
+}

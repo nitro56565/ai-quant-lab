@@ -21,3 +21,12 @@ market_data_pipeline/metadata/
 .env
 
 .venv
+
+catboost_info/
+
+.depwire/
+# Ignore Large Binaries
+*.parquet
+*.joblib
+*.db
+

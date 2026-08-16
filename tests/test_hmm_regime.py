@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import unittest
-from ai_engine.regime_hmm import HMMRegimeDetector
+from core_machine_learning.regime_hmm import HMMRegimeDetector
 
 class TestHMMRegimeDetector(unittest.TestCase):
     def setUp(self):

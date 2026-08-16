@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 import numpy as np
-from data_loader import DataLoader
+from historical_data_ingestion import DataLoader
 from strategy_engine.institutional_ai import InstitutionalAIStrategy
 from execution_engine import ExecutionEngine
 
